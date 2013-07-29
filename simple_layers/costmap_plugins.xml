@@ -1,0 +1,6 @@
+<library path="lib/libsimple_layer">
+  <class type="simple_layer_namespace::SimpleLayer" base_class_type="costmap_2d::Layer">
+    <description>Demo Layer that adds a point 1 meter in front of the robot</description>
+  </class>
+</library>
+
