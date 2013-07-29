@@ -1,0 +1,8 @@
+plugins: 
+    - {name: static_map,       type: "common_costmap_plugins::StaticCostmapPlugin"}
+    - {name: obstacles,        type: "common_costmap_plugins::VoxelCostmapPlugin"}
+publish_frequency: 1.0
+obstacles:
+    observation_sources: /base_scan
+    /base_scan: {data_type: LaserScan, sensor_frame: /base_laser_link, clearing: true, marking: false}
+

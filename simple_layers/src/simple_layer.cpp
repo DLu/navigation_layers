@@ -8,6 +8,8 @@ using costmap_2d::LETHAL_OBSTACLE;
 namespace simple_layer_namespace
 {
 
+SimpleLayer::SimpleLayer() {}
+
 void SimpleLayer::onInitialize()
 {
   ros::NodeHandle nh("~/" + name_);
