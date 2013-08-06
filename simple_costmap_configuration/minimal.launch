@@ -1,0 +1,6 @@
+<launch>
+    <include file="$(find simple_costmap_configuration)/test_core.launch" />
+    <node name="static_tf0" pkg="tf" type="static_transform_publisher" args="2.2 -1.1 0 1.51 0 0 /map /base_link 100"/>
+    <node name="static_tf1" pkg="tf" type="static_transform_publisher" args=".2 -.25 .2 0 0 0 /base_link /base_laser_link 100"/>
+    <rosparam file="$(find simple_costmap_configuration)/params/minimal.yaml" command="load" ns="/costmap_node/costmap" />
+</launch>

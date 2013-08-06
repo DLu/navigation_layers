@@ -1,6 +1,6 @@
 plugins: 
     - {name: static_map,       type: "costmap_2d::StaticLayer"}
-    - {name: obstacles,        type: "costmap_2d::ObstacleLayer"}
+    - {name: obstacles,        type: "costmap_2d::VoxelLayer"}
 publish_frequency: 1.0
 obstacles:
     observation_sources: /base_scan
