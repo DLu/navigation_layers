@@ -1,0 +1,17 @@
+rolling_window: true
+publish_frequency: .5
+width: 5.0
+height: 5.0
+resolution: .025
+global_frame: odom_combined
+robot_base_frame: base_link
+track_unknown_space: true
+footprint: [[-0.325, -0.325], [-0.325, 0.325], [0.325, 0.325], [0.46, 0.0], [0.325, -0.325]]
+plugins:
+ - {name: obstacles,        type: "costmap_2d::ObstacleLayer"}
+ - {name: inflater,         type: "costmap_2d::InflationLayer"}
+obstacles:
+    observation_sources: /base_scan
+    /base_scan: {data_type: LaserScan, sensor_frame: /base_laser_link, expected_update_rate: 0.3, marking: true, clearing: true, obstacle_range: 6, raytrace_range: 2}
+
+
