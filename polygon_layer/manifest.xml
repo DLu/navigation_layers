@@ -1,0 +1,17 @@
+<package>
+  <description brief="polygon_layer">
+
+     polygon_layer
+
+  </description>
+  <author>David!!</author>
+  <license>BSD</license>
+  <review status="unreviewed" notes=""/>
+  <url>http://ros.org/wiki/polygon_layer</url>
+  <depend package="roscpp"/>
+  <depend package="costmap_2d"/>
+  <depend package="dynamic_reconfigure"/>
+
+</package>
+
+
