@@ -3,7 +3,7 @@
 
 PLUGINLIB_EXPORT_CLASS(polygon_layer::PolygonLayer, costmap_2d::Layer)
 
-using costmap_2d::LETHAL_OBSTACLE;
+using costmap_2d::NO_INFORMATION;
 
 namespace polygon_layer
 {
@@ -14,6 +14,7 @@ void PolygonLayer::onInitialize()
 {
   ros::NodeHandle nh("~/" + name_);
   current_ = true;
+  default_value_ = NO_INFORMATION;
 
   matchSize();
 
