@@ -15,7 +15,9 @@ void PolygonLayer::onInitialize()
   ros::NodeHandle nh("~/" + name_);
   current_ = true;
 
-  poly_sub_ = nh.subscribe("polygons", 1, &PolygonLayer::incomingPolygons, this);
+  matchSize();
+
+  poly_sub_ = nh.subscribe("/polygons", 1, &PolygonLayer::incomingPolygons, this);
 
   dsrv_ = new dynamic_reconfigure::Server<PolygonLayerConfig>(nh);
   dynamic_reconfigure::Server<PolygonLayerConfig>::CallbackType cb = boost::bind(

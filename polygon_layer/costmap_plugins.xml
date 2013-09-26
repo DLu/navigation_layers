@@ -1,0 +1,5 @@
+<library path="lib/libpolygon_layer">
+  <class type="polygon_layer::PolygonLayer" base_class_type="costmap_2d::Layer">
+    <description>x</description>
+  </class>
+</library>
