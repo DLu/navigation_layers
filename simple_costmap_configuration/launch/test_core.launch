@@ -1,4 +1,7 @@
 <launch>
-    <node name="laserz" pkg="rosbaglive" type="play.py" args="$(find simple_costmap_configuration)/data/one_laser.bag -l -d0.2"/>
-    <node name="map_server" pkg="map_server" type="map_server" args="$(find simple_costmap_configuration)/data/realmap.yaml"/>
+    <include file="$(find simple_costmap_configuration)/launch/transforms.launch" />
+    <node name="laserz" pkg="rosbaglive" type="play.py" 
+            args="$(find simple_costmap_configuration)/data/one_laser.bag -l -d0.2"/>
+    <node name="map_server" pkg="map_server" type="map_server"
+            args="$(find simple_costmap_configuration)/data/realmap.yaml"/>
 </launch>

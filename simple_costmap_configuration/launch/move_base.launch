@@ -1,14 +1,7 @@
 <launch>
   <include file="$(find pr2_description)/robots/upload_pr2.launch" />
   <include file="$(find simple_costmap_configuration)/launch/test_core.launch" />
-
-    <node name="static_tf2" pkg="tf" type="static_transform_publisher" args="0 0 0 0 0 0 /map /odom_combined 100"/>
-    <node name="static_tf0" pkg="tf" type="static_transform_publisher" args="2.2 -1.1 0 1.51 0 0 /odom_combined /base_link 100"/>
-    <node name="static_tf1" pkg="tf" type="static_transform_publisher" args=".2 -.25 .2 0 0 0 /base_link /base_laser_link 100"/>
   
-  <!-- Throttle the voxel grid that is being published for rviz -->
-  <node ns="move_base_node/local_costmap" name="voxel_grid_throttle" pkg="topic_tools" type="throttle" args="messages voxel_grid 3.0 voxel_grid_throttled" />
-
   <node pkg="move_base" type="move_base" name="move_base_node" output="screen">
     <remap from="odom" to="base_odometry/odom" />
     <remap from="cmd_vel" to="navigation/cmd_vel" />
