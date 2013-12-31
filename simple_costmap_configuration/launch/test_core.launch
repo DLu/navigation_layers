@@ -1,7 +1,13 @@
 <launch>
+    <arg name="empty" default="False"/>
     <include file="$(find simple_costmap_configuration)/launch/transforms.launch" />
-    <node name="laserz" pkg="rosbaglive" type="play.py" 
+
+    <node name="laserz" pkg="rosbaglive" type="play.py" unless="$(arg empty)"
             args="$(find simple_costmap_configuration)/data/one_laser.bag -l -d0.2"/>
-    <node name="map_server" pkg="map_server" type="map_server"
+    <node name="map_server" pkg="map_server" type="map_server" unless="$(arg empty)"
             args="$(find simple_costmap_configuration)/data/realmap.yaml"/>
+
+    <node name="laserz" pkg="simple_costmap_configuration" type="lasers.py" if="$(arg empty)"/>
+    <node name="map_server" pkg="map_server" type="map_server" if="$(arg empty)"
+            args="$(find path_planning_data)/blank.yaml" />
 </launch>
