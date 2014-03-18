@@ -3,13 +3,14 @@
   <description>
      sonar_layer
   </description>
+  <version>0.1.0</version>
 
-  <maintainer>David!!</maintainer>
+  <maintainer email="davidvlu@gmail.com">David V. Lu!!</maintainer>
   <author>David!!</author>
 
   <license>BSD</license>
 
-  <url>http://ros.org/wiki/sonar_layer</url>
+  <url>http://wiki.ros.org/sonar_layer</url>
 
   <buildtool_depend>catkin</buildtool_depend>
 
