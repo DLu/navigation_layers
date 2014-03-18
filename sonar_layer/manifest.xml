@@ -1,17 +1,26 @@
 <package>
-  <description brief="sonar_layer">
-
+  <name>sonar_layer</name>
+  <description>
      sonar_layer
-
   </description>
+
+  <maintainer>David!!</maintainer>
   <author>David!!</author>
+
   <license>BSD</license>
-  <review status="unreviewed" notes=""/>
+
   <url>http://ros.org/wiki/sonar_layer</url>
-  <depend package="roscpp"/>
-  <depend package="costmap_2d"/>
-  <depend package="sensor_msgs"/>
-  <depend package="pluginlib"/>
+
+  <buildtool_depend>catkin</buildtool_depend>
+
+  <build_depend>roscpp</build_depend>
+  <build_depend>costmap_2d</build_depend>
+  <build_depend>sensor_msgs</build_depend>
+  <build_depend>pluginlib</build_depend>
+  <run_depend>roscpp</run_depend>
+  <run_depend>costmap_2d</run_depend>
+  <run_depend>sensor_msgs</run_depend>
+  <run_depend>pluginlib</run_depend>
 
   <export>
     <costmap_2d plugin="${prefix}/costmap_plugins.xml" />
