@@ -1,4 +1,4 @@
-#include<sonar_layer/sonar_layer.h>
+#include <sonar_layer/sonar_layer.h>
 #include <pluginlib/class_list_macros.h>
 
 PLUGINLIB_EXPORT_CLASS(sonar_layer::SonarLayer, costmap_2d::Layer)
@@ -22,7 +22,7 @@ void SonarLayer::onInitialize()
   min_x_ = min_y_ = -std::numeric_limits<double>::max();
   max_x_ = max_y_ = std::numeric_limits<double>::max();
 
-  range_sub_ = nh.subscribe("/sonar", 1, &SonarLayer::incomingRange, this);
+  range_sub_ = nh.subscribe("/sonar", 10, &SonarLayer::incomingRange, this);
 
   dsrv_ = new dynamic_reconfigure::Server<costmap_2d::GenericPluginConfig>(nh);
   dynamic_reconfigure::Server<costmap_2d::GenericPluginConfig>::CallbackType cb = boost::bind(
@@ -108,6 +108,7 @@ void SonarLayer::incomingRange(const sensor_msgs::RangeConstPtr& range)
     tf_->transformPoint(global_frame_, in, out);
     
     double tx = out.point.x, ty = out.point.y;
+    ROS_INFO("%s", range->header.frame_id.c_str());
     ROS_INFO("%f %f --> %f %f", ox, oy, tx, ty);
     
     // calculate target props
@@ -127,12 +128,12 @@ void SonarLayer::incomingRange(const sensor_msgs::RangeConstPtr& range)
       dy2 = b;
     }
   
-  ROS_INFO("%f %f | %f %f", dx1, dy1, dx2, dy2);
+    ROS_INFO("%f %f | %f %f", dx1, dy1, dx2, dy2);
   
     double x1 = ox, y1 = oy, x2 = ox, y2 = oy;
     for(int i=0;i<int(d/dx1);i++){
       double x = x1, y = y1;
-        ROS_INFO("==%f==", y);
+      ROS_INFO("==%f==", y);
       while(x <= x2){
         update_cell(ox, oy, r, x, y);
         ROS_INFO("   %f", x);
@@ -168,6 +169,7 @@ void SonarLayer::incomingRange(const sensor_msgs::RangeConstPtr& range)
     
     ROS_INFO("\t%f %f %f %f", bx0, by0, bx1, by1);
     ROS_INFO("\t%d %d %d %d", sx, sy, ex, ey);
+
     
     for(unsigned int x=sx; x<ex; x++){
       for(unsigned int y=sy; y<ey; y++){
@@ -203,17 +205,21 @@ void SonarLayer::update_cell(double ox, double oy, double r, double nx, double n
     double prob_occ = sensor * prior;
     double prob_not = (1 - sensor) * (1 - prior);
     double new_prob = prob_occ/(prob_occ+prob_not);
+    //new_prob = phi>r?1.0:0.0;
     
     //ROS_INFO("%f %f | %f %f = %f", dx, dy, theta, phi, sensor);
     //ROS_INFO("%f | %f %f | %f", prior, prob_occ, prob_not, new_prob);
-      unsigned char c = to_cost(new_prob);
-      setCost(x,y,c);
+    unsigned char c = to_cost(new_prob);
+    setCost(x,y,c);
   }
 }
 
-void SonarLayer::updateBounds(double origin_x, double origin_y, double origin_yaw, double* min_x,
+void SonarLayer::updateBounds(double robot_x, double robot_y, double robot_yaw, double* min_x,
                                            double* min_y, double* max_x, double* max_y)
 {
+  if (layered_costmap_->isRolling())
+    updateOrigin(robot_x - getSizeInMetersX() / 2, robot_y - getSizeInMetersY() / 2);
+
   if (current_)
     return;
 
@@ -224,6 +230,7 @@ void SonarLayer::updateBounds(double origin_x, double origin_y, double origin_ya
   
   min_x_ = min_y_ = std::numeric_limits<double>::max();
   max_x_ = max_y_ = std::numeric_limits<double>::min();
+  current_ = true;
 }
 
 void SonarLayer::updateCosts(costmap_2d::Costmap2D& master_grid, int min_i, int min_j, int max_i,
