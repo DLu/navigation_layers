@@ -30,7 +30,8 @@ private:
   double sensor_model(double r, double phi, double theta);
   
   void get_deltas(double angle, double *dx, double *dy);
-  void update_cell(double ox, double oy, double r, double nx, double ny);
+  void update_cell(double ox, double oy, double ot, double r, double nx,
+                   double ny);
   
   double to_prob(unsigned char c){ return double(c)/costmap_2d::LETHAL_OBSTACLE; }
   unsigned char to_cost(double p){ return (unsigned char)(p*costmap_2d::LETHAL_OBSTACLE); }

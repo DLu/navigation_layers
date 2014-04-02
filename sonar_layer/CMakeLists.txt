@@ -2,10 +2,12 @@ cmake_minimum_required(VERSION 2.8.3)
 project(sonar_layer)
 
 find_package(catkin REQUIRED COMPONENTS
-  roscpp
+  angles
   costmap_2d
+  pluginlib
+  roscpp
   sensor_msgs
-  pluginlib)
+  )
 
 catkin_package()
 
