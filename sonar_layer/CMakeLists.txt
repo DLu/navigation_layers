@@ -1,9 +1,19 @@
-cmake_minimum_required(VERSION 2.4.6)
-include($ENV{ROS_ROOT}/core/rosbuild/rosbuild.cmake)
+cmake_minimum_required(VERSION 2.8.3)
+project(sonar_layer)
 
-rosbuild_init()
+find_package(catkin REQUIRED COMPONENTS
+  angles
+  costmap_2d
+  pluginlib
+  roscpp
+  sensor_msgs
+  )
 
-set(LIBRARY_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/lib)
-rosbuild_add_library(${PROJECT_NAME} src/sonar_layer.cpp)
+catkin_package()
 
+include_directories(include ${catkin_INCLUDE_DIRS})
 
+add_library(${PROJECT_NAME} src/sonar_layer.cpp)
+target_link_libraries(${PROJECT_NAME} ${catkin_LIBRARIES})
+
+# TODO: install plugin.xml
