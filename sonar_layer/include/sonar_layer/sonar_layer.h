@@ -37,6 +37,8 @@ private:
     
   double max_angle_, phi_v_;
   std::string global_frame_;
+  
+  double clear_threshold_, mark_threshold_;
 
   ros::Subscriber range_sub_;
   double min_x_, min_y_, max_x_, max_y_;

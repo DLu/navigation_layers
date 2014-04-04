@@ -25,6 +25,9 @@ void SonarLayer::onInitialize()
 
   std::string topic;
   nh.param("topic", topic, std::string("/sonar"));
+  
+  nh.param("clear_threshold", clear_threshold_, .2);
+  nh.param("mark_threshold", mark_threshold_, .8);
 
   range_sub_ = nh.subscribe(topic, 100, &SonarLayer::incomingRange, this);
 
@@ -225,7 +228,33 @@ void SonarLayer::updateCosts(costmap_2d::Costmap2D& master_grid, int min_i, int 
   if (!enabled_)
     return;
 
-  updateWithMax(master_grid, min_i, min_j, max_i, max_j);
+  unsigned char* master_array = master_grid.getCharMap();
+  unsigned int span = master_grid.getSizeInCellsX();
+  unsigned char clear = to_cost(clear_threshold_), mark = to_cost(mark_threshold_);
+
+  for (int j = min_j; j < max_j; j++)
+  {
+    unsigned int it = j * span + min_i;
+    for (int i = min_i; i < max_i; i++)
+    {
+      unsigned char prob = costmap_[it];
+      unsigned char current;
+      if(prob>mark)
+        current = costmap_2d::LETHAL_OBSTACLE;
+      else if(prob<clear)
+        current = costmap_2d::FREE_SPACE;
+      else{
+        it++;
+        continue;
+      }
+      
+      unsigned char old_cost = master_array[it];
+      
+      if (old_cost == NO_INFORMATION || old_cost < current)
+        master_array[it] = current;
+      it++;
+    }
+  }
 }
 
 } // end namespace
