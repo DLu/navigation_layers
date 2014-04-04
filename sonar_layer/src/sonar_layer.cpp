@@ -108,81 +108,65 @@ void SonarLayer::incomingRange(const sensor_msgs::RangeConstPtr& range)
   tf_->transformPoint(global_frame_, in, out);
   
   double tx = out.point.x, ty = out.point.y;
-  ROS_INFO("%f %f --> %f %f", ox, oy, tx, ty);
   
   // calculate target props
   double dx = tx-ox, dy = ty-oy,
         theta = atan2(dy,dx), d = sqrt(dx*dx+dy*dy);
-
-  /*
-  double dx1, dx2, dy1, dy2;
-  get_deltas(theta+max_angle_, &dx1, &dy1);
-  get_deltas(theta-max_angle_, &dx2, &dy2);
-
-  if(dx1 > dx2){
-    double a = dx1, b = dy1;
-    dx1 = dx2;
-    dy1 = dy2;
-    dx2 = a;
-    dy2 = b;
-  }
-
-ROS_INFO("%f %f | %f %f", dx1, dy1, dx2, dy2);
-
-  double x1 = ox, y1 = oy, x2 = ox, y2 = oy;
-  for(int i=0;i<int(d/dx1);i++){
-    double x = x1, y = y1;
-      ROS_INFO("==%f==", y);
-    while(x <= x2){
-      update_cell(ox, oy, theta, r, x, y);
-      ROS_INFO("   %f", x);
-      x += resolution_;
-    }
-   
-    x1 += dx1;
-    x2 += dx2;
-    y1 += dy1;
-    y2 += dy2;
-  }
-  */
   
-  double bx0, by0, bx1, by1;
-  bx0 = bx1 = ox;
-  by0 = by1 = oy;
+  // Integer Bounds of Update
+  int bx0, by0, bx1, by1;
+  
+  // Bounds includes the origin
+  worldToMapNoBounds(ox, oy, bx0, by0);
+  bx1 = bx0;
+  by1 = by0;
+  touch(ox, oy, &min_x_, &min_y_, &max_x_, &max_y_);
+
+  // Update Map with Target Point
+  unsigned int aa, ab;
+  if(worldToMap(tx, ty, aa, ab)){
+    setCost(aa, ab, 233);
+    touch(tx, ty, &min_x_, &min_y_, &max_x_, &max_y_);
+  }
   
   double mx, my;
+  int a, b;
+  
+  // Update left side of sonar cone
   mx = ox + cos(theta-max_angle_) * d * 1.2;
   my = oy + sin(theta-max_angle_) * d * 1.2;  
-  touch(mx, my, &bx0, &by0, &bx1, &by1);  
+  worldToMapNoBounds(mx, my, a, b);
+  bx0 = std::min(bx0, a);
+  bx1 = std::max(bx1, a);
+  by0 = std::min(by0, b);
+  by1 = std::max(by1, b);
+  touch(mx, my, &min_x_, &min_y_, &max_x_, &max_y_);
+  
+  // Update right side of sonar cone
   mx = ox + cos(theta+max_angle_) * d * 1.2;
   my = oy + sin(theta+max_angle_) * d * 1.2;
-  touch(mx, my, &bx0, &by0, &bx1, &by1);
   
-  int sx, sy, ex, ey;
-  worldToMapNoBounds(bx0, by0, sx, sy);
-  sx = std::max(0, sx);
-  sy = std::max(0, sy);
-  worldToMapNoBounds(bx1, by1, ex, ey);
-  ex = std::min((int)size_x_, ex);
-  ey = std::min((int)size_y_, ey);
+  worldToMapNoBounds(mx, my, a, b);
+  bx0 = std::min(bx0, a);
+  bx1 = std::max(bx1, a);
+  by0 = std::min(by0, b);
+  by1 = std::max(by1, b);
+  touch(mx, my, &min_x_, &min_y_, &max_x_, &max_y_);
   
-  ROS_INFO("\t%f %f %f %f", bx0, by0, bx1, by1);
-  ROS_INFO("\t%d %d %d %d", sx, sy, ex, ey);
+  // Limit Bounds to Grid  
+  bx0 = std::max(0, bx0);
+  by0 = std::max(0, by0);
+  bx1 = std::min((int)size_x_, bx1);
+  by1 = std::min((int)size_y_, by1);
   
-  for(int x=sx; x<ex; x++){
-    for(int y=sy; y<ey; y++){
+  for(unsigned int x=bx0; x<(unsigned int)bx1; x++){
+    for(unsigned int y=by0; y<(unsigned int)by1; y++){
       double wx, wy;
       mapToWorld(x,y,wx,wy);
-      //ROS_INFO("\t\t%f %f", wx, wy);
       update_cell(ox, oy, theta, r, wx, wy);
     }
   } 
   
-//  update_cell(ox, oy, theta, r, tx, ty);
-  
-  touch(bx0, by0, &min_x_, &min_y_, &max_x_, &max_y_);
-  touch(bx1, by1, &min_x_, &min_y_, &max_x_, &max_y_);
-
   current_ = false;
 }
 
