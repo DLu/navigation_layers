@@ -204,9 +204,12 @@ void SonarLayer::update_cell(double ox, double oy, double ot, double r, double n
   }
 }
 
-void SonarLayer::updateBounds(double origin_x, double origin_y, double origin_yaw, double* min_x,
+void SonarLayer::updateBounds(double robot_x, double robot_y, double robot_yaw, double* min_x,
                                            double* min_y, double* max_x, double* max_y)
 {
+ if (layered_costmap_->isRolling())
+    updateOrigin(robot_x - getSizeInMetersX() / 2, robot_y - getSizeInMetersY() / 2);
+
   if (current_)
     return;
 
@@ -217,6 +220,7 @@ void SonarLayer::updateBounds(double origin_x, double origin_y, double origin_ya
   
   min_x_ = min_y_ = std::numeric_limits<double>::max();
   max_x_ = max_y_ = std::numeric_limits<double>::min();
+  current_ = true;
 }
 
 void SonarLayer::updateCosts(costmap_2d::Costmap2D& master_grid, int min_i, int min_j, int max_i,
