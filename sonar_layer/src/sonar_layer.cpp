@@ -1,5 +1,6 @@
 #include<sonar_layer/sonar_layer.h>
 #include <pluginlib/class_list_macros.h>
+#include <angles/angles.h>
 
 PLUGINLIB_EXPORT_CLASS(sonar_layer::SonarLayer, costmap_2d::Layer)
 
@@ -130,7 +131,7 @@ ROS_INFO("%f %f | %f %f", dx1, dy1, dx2, dy2);
     double x = x1, y = y1;
       ROS_INFO("==%f==", y);
     while(x <= x2){
-      update_cell(ox, oy, r, x, y);
+      update_cell(ox, oy, theta, r, x, y);
       ROS_INFO("   %f", x);
       x += resolution_;
     }
@@ -165,16 +166,16 @@ ROS_INFO("%f %f | %f %f", dx1, dy1, dx2, dy2);
   ROS_INFO("\t%f %f %f %f", bx0, by0, bx1, by1);
   ROS_INFO("\t%d %d %d %d", sx, sy, ex, ey);
   
-  for(unsigned int x=sx; x<ex; x++){
-    for(unsigned int y=sy; y<ey; y++){
+  for(int x=sx; x<ex; x++){
+    for(int y=sy; y<ey; y++){
       double wx, wy;
       mapToWorld(x,y,wx,wy);
       //ROS_INFO("\t\t%f %f", wx, wy);
-      update_cell(ox, oy, r, wx, wy);
+      update_cell(ox, oy, theta, r, wx, wy);
     }
   } 
   
-//  update_cell(ox, oy, r, tx, ty);
+//  update_cell(ox, oy, theta, r, tx, ty);
   
   touch(bx0, by0, &min_x_, &min_y_, &max_x_, &max_y_);
   touch(bx1, by1, &min_x_, &min_y_, &max_x_, &max_y_);
@@ -182,12 +183,14 @@ ROS_INFO("%f %f | %f %f", dx1, dy1, dx2, dy2);
   current_ = false;
 }
 
-void SonarLayer::update_cell(double ox, double oy, double r, double nx, double ny)
+void SonarLayer::update_cell(double ox, double oy, double ot, double r, double nx, double ny)
 {
   unsigned int x, y;
   if(worldToMap(nx, ny, x, y)){
     double dx = nx-ox, dy = ny-oy;
-    double theta = atan2(dy, dx), phi = sqrt(dx*dx+dy*dy);
+    double theta = atan2(dy, dx) - ot;
+    theta = angles::normalize_angle(theta);
+    double phi = sqrt(dx*dx+dy*dy);
     double sensor = sensor_model(r,phi,theta);
     double prior = to_prob(getCost(x,y));
     double prob_occ = sensor * prior;

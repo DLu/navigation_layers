@@ -12,6 +12,7 @@
   <depend package="costmap_2d"/>
   <depend package="sensor_msgs"/>
   <depend package="pluginlib"/>
+  <depend package="angles"/>
 
   <export>
     <costmap_2d plugin="${prefix}/costmap_plugins.xml" />
