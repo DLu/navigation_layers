@@ -99,6 +99,15 @@ void SonarLayer::incomingRange(const sensor_msgs::RangeConstPtr& range)
   geometry_msgs::PointStamped in, out;
   in.header.stamp = range->header.stamp;
   in.header.frame_id = range->header.frame_id;  
+
+  if(!tf_->waitForTransform(global_frame_, in.header.frame_id,
+        in.header.stamp, ros::Duration(0.1)) ) {
+     ROS_ERROR("Sonar layer can't transform from %s to %s at %f",
+        global_frame_.c_str(), in.header.frame_id.c_str(),
+        in.header.stamp.toSec());
+     return;
+  }
+  
   tf_->transformPoint (global_frame_, in, out);
   
   double ox = out.point.x, oy = out.point.y;
