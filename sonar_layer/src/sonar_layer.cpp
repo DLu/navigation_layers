@@ -23,7 +23,10 @@ void SonarLayer::onInitialize()
   min_x_ = min_y_ = -std::numeric_limits<double>::max();
   max_x_ = max_y_ = std::numeric_limits<double>::max();
 
-  range_sub_ = nh.subscribe("/sonar", 1, &SonarLayer::incomingRange, this);
+  std::string topic;
+  nh.param("topic", topic, std::string("/sonar"));
+
+  range_sub_ = nh.subscribe(topic, 100, &SonarLayer::incomingRange, this);
 
   dsrv_ = new dynamic_reconfigure::Server<costmap_2d::GenericPluginConfig>(nh);
   dynamic_reconfigure::Server<costmap_2d::GenericPluginConfig>::CallbackType cb = boost::bind(
