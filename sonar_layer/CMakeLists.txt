@@ -2,6 +2,7 @@ cmake_minimum_required(VERSION 2.8.3)
 project(sonar_layer)
 
 find_package(catkin REQUIRED COMPONENTS
+  angles
   roscpp
   costmap_2d
   sensor_msgs

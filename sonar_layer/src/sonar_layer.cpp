@@ -1,5 +1,6 @@
 #include<sonar_layer/sonar_layer.h>
 #include <pluginlib/class_list_macros.h>
+#include <angles/angles.h>
 
 PLUGINLIB_EXPORT_CLASS(sonar_layer::SonarLayer, costmap_2d::Layer)
 
@@ -22,7 +23,13 @@ void SonarLayer::onInitialize()
   min_x_ = min_y_ = -std::numeric_limits<double>::max();
   max_x_ = max_y_ = std::numeric_limits<double>::max();
 
-  range_sub_ = nh.subscribe("/sonar", 1, &SonarLayer::incomingRange, this);
+  std::string topic;
+  nh.param("topic", topic, std::string("/sonar"));
+  
+  nh.param("clear_threshold", clear_threshold_, .2);
+  nh.param("mark_threshold", mark_threshold_, .8);
+
+  range_sub_ = nh.subscribe(topic, 100, &SonarLayer::incomingRange, this);
 
   dsrv_ = new dynamic_reconfigure::Server<costmap_2d::GenericPluginConfig>(nh);
   dynamic_reconfigure::Server<costmap_2d::GenericPluginConfig>::CallbackType cb = boost::bind(
@@ -95,6 +102,15 @@ void SonarLayer::incomingRange(const sensor_msgs::RangeConstPtr& range)
   geometry_msgs::PointStamped in, out;
   in.header.stamp = range->header.stamp;
   in.header.frame_id = range->header.frame_id;  
+
+  if(!tf_->waitForTransform(global_frame_, in.header.frame_id,
+        in.header.stamp, ros::Duration(0.1)) ) {
+     ROS_ERROR("Sonar layer can't transform from %s to %s at %f",
+        global_frame_.c_str(), in.header.frame_id.c_str(),
+        in.header.stamp.toSec());
+     return;
+  }
+  
   tf_->transformPoint (global_frame_, in, out);
   
   double ox = out.point.x, oy = out.point.y;
@@ -104,90 +120,76 @@ void SonarLayer::incomingRange(const sensor_msgs::RangeConstPtr& range)
   tf_->transformPoint(global_frame_, in, out);
   
   double tx = out.point.x, ty = out.point.y;
-  ROS_INFO("%f %f --> %f %f", ox, oy, tx, ty);
   
   // calculate target props
   double dx = tx-ox, dy = ty-oy,
         theta = atan2(dy,dx), d = sqrt(dx*dx+dy*dy);
-
-  /*
-  double dx1, dx2, dy1, dy2;
-  get_deltas(theta+max_angle_, &dx1, &dy1);
-  get_deltas(theta-max_angle_, &dx2, &dy2);
-
-  if(dx1 > dx2){
-    double a = dx1, b = dy1;
-    dx1 = dx2;
-    dy1 = dy2;
-    dx2 = a;
-    dy2 = b;
-  }
-
-ROS_INFO("%f %f | %f %f", dx1, dy1, dx2, dy2);
-
-  double x1 = ox, y1 = oy, x2 = ox, y2 = oy;
-  for(int i=0;i<int(d/dx1);i++){
-    double x = x1, y = y1;
-      ROS_INFO("==%f==", y);
-    while(x <= x2){
-      update_cell(ox, oy, r, x, y);
-      ROS_INFO("   %f", x);
-      x += resolution_;
-    }
-   
-    x1 += dx1;
-    x2 += dx2;
-    y1 += dy1;
-    y2 += dy2;
-  }
-  */
   
-  double bx0, by0, bx1, by1;
-  bx0 = bx1 = ox;
-  by0 = by1 = oy;
+  // Integer Bounds of Update
+  int bx0, by0, bx1, by1;
+  
+  // Bounds includes the origin
+  worldToMapNoBounds(ox, oy, bx0, by0);
+  bx1 = bx0;
+  by1 = by0;
+  touch(ox, oy, &min_x_, &min_y_, &max_x_, &max_y_);
+
+  // Update Map with Target Point
+  unsigned int aa, ab;
+  if(worldToMap(tx, ty, aa, ab)){
+    setCost(aa, ab, 233);
+    touch(tx, ty, &min_x_, &min_y_, &max_x_, &max_y_);
+  }
   
   double mx, my;
+  int a, b;
+  
+  // Update left side of sonar cone
   mx = ox + cos(theta-max_angle_) * d * 1.2;
   my = oy + sin(theta-max_angle_) * d * 1.2;  
-  touch(mx, my, &bx0, &by0, &bx1, &by1);  
+  worldToMapNoBounds(mx, my, a, b);
+  bx0 = std::min(bx0, a);
+  bx1 = std::max(bx1, a);
+  by0 = std::min(by0, b);
+  by1 = std::max(by1, b);
+  touch(mx, my, &min_x_, &min_y_, &max_x_, &max_y_);
+  
+  // Update right side of sonar cone
   mx = ox + cos(theta+max_angle_) * d * 1.2;
   my = oy + sin(theta+max_angle_) * d * 1.2;
-  touch(mx, my, &bx0, &by0, &bx1, &by1);
   
-  int sx, sy, ex, ey;
-  worldToMapNoBounds(bx0, by0, sx, sy);
-  sx = std::max(0, sx);
-  sy = std::max(0, sy);
-  worldToMapNoBounds(bx1, by1, ex, ey);
-  ex = std::min((int)size_x_, ex);
-  ey = std::min((int)size_y_, ey);
+  worldToMapNoBounds(mx, my, a, b);
+  bx0 = std::min(bx0, a);
+  bx1 = std::max(bx1, a);
+  by0 = std::min(by0, b);
+  by1 = std::max(by1, b);
+  touch(mx, my, &min_x_, &min_y_, &max_x_, &max_y_);
   
-  ROS_INFO("\t%f %f %f %f", bx0, by0, bx1, by1);
-  ROS_INFO("\t%d %d %d %d", sx, sy, ex, ey);
+  // Limit Bounds to Grid  
+  bx0 = std::max(0, bx0);
+  by0 = std::max(0, by0);
+  bx1 = std::min((int)size_x_, bx1);
+  by1 = std::min((int)size_y_, by1);
   
-  for(unsigned int x=sx; x<ex; x++){
-    for(unsigned int y=sy; y<ey; y++){
+  for(unsigned int x=bx0; x<(unsigned int)bx1; x++){
+    for(unsigned int y=by0; y<(unsigned int)by1; y++){
       double wx, wy;
       mapToWorld(x,y,wx,wy);
-      //ROS_INFO("\t\t%f %f", wx, wy);
-      update_cell(ox, oy, r, wx, wy);
+      update_cell(ox, oy, theta, r, wx, wy);
     }
   } 
   
-//  update_cell(ox, oy, r, tx, ty);
-  
-  touch(bx0, by0, &min_x_, &min_y_, &max_x_, &max_y_);
-  touch(bx1, by1, &min_x_, &min_y_, &max_x_, &max_y_);
-
   current_ = false;
 }
 
-void SonarLayer::update_cell(double ox, double oy, double r, double nx, double ny)
+void SonarLayer::update_cell(double ox, double oy, double ot, double r, double nx, double ny)
 {
   unsigned int x, y;
   if(worldToMap(nx, ny, x, y)){
     double dx = nx-ox, dy = ny-oy;
-    double theta = atan2(dy, dx), phi = sqrt(dx*dx+dy*dy);
+    double theta = atan2(dy, dx) - ot;
+    theta = angles::normalize_angle(theta);
+    double phi = sqrt(dx*dx+dy*dy);
     double sensor = sensor_model(r,phi,theta);
     double prior = to_prob(getCost(x,y));
     double prob_occ = sensor * prior;
@@ -201,9 +203,12 @@ void SonarLayer::update_cell(double ox, double oy, double r, double nx, double n
   }
 }
 
-void SonarLayer::updateBounds(double origin_x, double origin_y, double origin_yaw, double* min_x,
+void SonarLayer::updateBounds(double robot_x, double robot_y, double robot_yaw, double* min_x,
                                            double* min_y, double* max_x, double* max_y)
 {
+ if (layered_costmap_->isRolling())
+    updateOrigin(robot_x - getSizeInMetersX() / 2, robot_y - getSizeInMetersY() / 2);
+
   if (current_)
     return;
 
@@ -214,6 +219,7 @@ void SonarLayer::updateBounds(double origin_x, double origin_y, double origin_ya
   
   min_x_ = min_y_ = std::numeric_limits<double>::max();
   max_x_ = max_y_ = std::numeric_limits<double>::min();
+  current_ = true;
 }
 
 void SonarLayer::updateCosts(costmap_2d::Costmap2D& master_grid, int min_i, int min_j, int max_i,
@@ -222,7 +228,33 @@ void SonarLayer::updateCosts(costmap_2d::Costmap2D& master_grid, int min_i, int 
   if (!enabled_)
     return;
 
-  updateWithMax(master_grid, min_i, min_j, max_i, max_j);
+  unsigned char* master_array = master_grid.getCharMap();
+  unsigned int span = master_grid.getSizeInCellsX();
+  unsigned char clear = to_cost(clear_threshold_), mark = to_cost(mark_threshold_);
+
+  for (int j = min_j; j < max_j; j++)
+  {
+    unsigned int it = j * span + min_i;
+    for (int i = min_i; i < max_i; i++)
+    {
+      unsigned char prob = costmap_[it];
+      unsigned char current;
+      if(prob>mark)
+        current = costmap_2d::LETHAL_OBSTACLE;
+      else if(prob<clear)
+        current = costmap_2d::FREE_SPACE;
+      else{
+        it++;
+        continue;
+      }
+      
+      unsigned char old_cost = master_array[it];
+      
+      if (old_cost == NO_INFORMATION || old_cost < current)
+        master_array[it] = current;
+      it++;
+    }
+  }
 }
 
 } // end namespace
