@@ -40,7 +40,7 @@ private:
   
   double clear_threshold_, mark_threshold_;
 
-  ros::Subscriber range_sub_;
+  std::vector<ros::Subscriber> range_subs_;
   double min_x_, min_y_, max_x_, max_y_;
   
   dynamic_reconfigure::Server<costmap_2d::GenericPluginConfig> *dsrv_;
