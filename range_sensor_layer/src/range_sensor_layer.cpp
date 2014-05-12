@@ -23,13 +23,49 @@ void RangeSensorLayer::onInitialize()
   min_x_ = min_y_ = -std::numeric_limits<double>::max();
   max_x_ = max_y_ = std::numeric_limits<double>::max();
 
-  std::string topic;
-  nh.param("topic", topic, std::string("/sonar"));
+  // Default topic names list contains a single topic: /sonar
+  // We use the XmlRpcValue constructor that takes a XML string and reading start offset
+  const char* xml = "<value><array><data><value>/sonar</value></data></array></value>";
+  int zero_offset = 0;
+  std::string topics_ns;
+  XmlRpc::XmlRpcValue topic_names(xml, &zero_offset);
+
+  nh.param("topics_namespace", topics_ns, std::string());
+  nh.param("topic_names_list", topic_names, topic_names);
   
   nh.param("clear_threshold", clear_threshold_, .2);
   nh.param("mark_threshold", mark_threshold_, .8);
 
-  range_sub_ = nh.subscribe(topic, 100, &RangeSensorLayer::incomingRange, this);
+  // Validate topic names list: it must be a (normally non-empty) list of strings
+  if ((topic_names.valid() == false) || (topic_names.getType() != XmlRpc::XmlRpcValue::TypeArray))
+  {
+    ROS_ERROR("Invalid topic names list: it must be a non-empty list of strings");
+    return;
+  }
+
+  if (topic_names.size() < 1)
+  {
+    // This could be an error, but I keep it as it can be useful for debug
+    ROS_WARN("Empty topic names list: sonar layer will have no effect on costmap");
+  }
+
+  // Traverse the topic names list subscribing to all of them with the same callback method
+  for (unsigned int i = 0; i < topic_names.size(); i++)
+  {
+    if (topic_names[i].getType() != XmlRpc::XmlRpcValue::TypeString)
+    {
+      ROS_WARN("Invalid topic names list: element %d is not a string, so it will be ignored", i);
+    }
+    else
+    {
+      std::string topic_name(topics_ns);
+      if ((topic_name.size() > 0) && (topic_name.at(topic_name.size() - 1) != '/'))
+        topic_name += "/";
+      topic_name += static_cast<std::string>(topic_names[i]);
+      range_subs_.push_back(nh.subscribe(topic_name, 100, &RangeSensorLayer::incomingRange, this));
+      ROS_DEBUG("Sonar layer: subscribed to topic %s", range_subs_.back().getTopic().c_str());
+    }
+  }
 
   dsrv_ = new dynamic_reconfigure::Server<costmap_2d::GenericPluginConfig>(nh);
   dynamic_reconfigure::Server<costmap_2d::GenericPluginConfig>::CallbackType cb = boost::bind(
