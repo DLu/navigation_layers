@@ -1,17 +1,17 @@
-#include <sonar_layer/sonar_layer.h>
+#include<range_sensor_layer/range_sensor_layer.h>
 #include <pluginlib/class_list_macros.h>
 #include <angles/angles.h>
 
-PLUGINLIB_EXPORT_CLASS(sonar_layer::SonarLayer, costmap_2d::Layer)
+PLUGINLIB_EXPORT_CLASS(range_sensor_layer::RangeSensorLayer, costmap_2d::Layer)
 
 using costmap_2d::NO_INFORMATION;
 
-namespace sonar_layer
+namespace range_sensor_layer
 {
 
-SonarLayer::SonarLayer() {}
+RangeSensorLayer::RangeSensorLayer() {}
 
-void SonarLayer::onInitialize()
+void RangeSensorLayer::onInitialize()
 {
   ros::NodeHandle nh("~/" + name_);
   current_ = true;
@@ -73,13 +73,13 @@ void SonarLayer::onInitialize()
 
   dsrv_ = new dynamic_reconfigure::Server<costmap_2d::GenericPluginConfig>(nh);
   dynamic_reconfigure::Server<costmap_2d::GenericPluginConfig>::CallbackType cb = boost::bind(
-      &SonarLayer::reconfigureCB, this, _1, _2);
+      &RangeSensorLayer::reconfigureCB, this, _1, _2);
   dsrv_->setCallback(cb);
   global_frame_ = layered_costmap_->getGlobalFrameID();
 }
 
 
-double SonarLayer::gamma(double theta)
+double RangeSensorLayer::gamma(double theta)
 {
     if(fabs(theta)>max_angle_)
         return 0.0;
@@ -87,12 +87,12 @@ double SonarLayer::gamma(double theta)
         return 1 - pow(theta/max_angle_, 2);
 }
 
-double SonarLayer::delta(double phi)
+double RangeSensorLayer::delta(double phi)
 {
     return 1 - (1+tanh(2*(phi-phi_v_)))/2;
 }
 
-void SonarLayer::get_deltas(double angle, double *dx, double *dy)
+void RangeSensorLayer::get_deltas(double angle, double *dx, double *dy)
 {
     double ta = tan(angle);
     if(ta==0)
@@ -104,7 +104,7 @@ void SonarLayer::get_deltas(double angle, double *dx, double *dy)
     *dy = copysign(resolution_, sin(angle));
 }
 
-double SonarLayer::sensor_model(double r, double phi, double theta)
+double RangeSensorLayer::sensor_model(double r, double phi, double theta)
 {
     double lbda = delta(phi)*gamma(theta);
 
@@ -123,7 +123,7 @@ double SonarLayer::sensor_model(double r, double phi, double theta)
 }
 
 
-void SonarLayer::reconfigureCB(costmap_2d::GenericPluginConfig &config, uint32_t level)
+void RangeSensorLayer::reconfigureCB(costmap_2d::GenericPluginConfig &config, uint32_t level)
 {
   if(enabled_ != config.enabled)
   {
@@ -132,7 +132,7 @@ void SonarLayer::reconfigureCB(costmap_2d::GenericPluginConfig &config, uint32_t
   }
 }
 
-void SonarLayer::incomingRange(const sensor_msgs::RangeConstPtr& range)
+void RangeSensorLayer::incomingRange(const sensor_msgs::RangeConstPtr& range)
 {
   double r = range->range;
   if(r<range->min_range || r>range->max_range)
@@ -223,7 +223,7 @@ void SonarLayer::incomingRange(const sensor_msgs::RangeConstPtr& range)
   last_reading_time_ = ros::Time::now();
 }
 
-void SonarLayer::update_cell(double ox, double oy, double ot, double r, double nx, double ny)
+void RangeSensorLayer::update_cell(double ox, double oy, double ot, double r, double nx, double ny)
 {
   unsigned int x, y;
   if(worldToMap(nx, ny, x, y)){
@@ -244,7 +244,7 @@ void SonarLayer::update_cell(double ox, double oy, double ot, double r, double n
   }
 }
 
-void SonarLayer::updateBounds(double robot_x, double robot_y, double robot_yaw, double* min_x,
+void RangeSensorLayer::updateBounds(double robot_x, double robot_y, double robot_yaw, double* min_x,
                                            double* min_y, double* max_x, double* max_y)
 {
   if (layered_costmap_->isRolling())
@@ -259,7 +259,7 @@ void SonarLayer::updateBounds(double robot_x, double robot_y, double robot_yaw, 
   max_x_ = max_y_ = std::numeric_limits<double>::min();
 }
 
-void SonarLayer::updateCosts(costmap_2d::Costmap2D& master_grid, int min_i, int min_j, int max_i,
+void RangeSensorLayer::updateCosts(costmap_2d::Costmap2D& master_grid, int min_i, int min_j, int max_i,
                                           int max_j)
 {
   if (!enabled_)

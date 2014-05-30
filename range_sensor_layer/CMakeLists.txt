@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 2.8.3)
-project(sonar_layer)
+project(range_sensor_layer)
 
 find_package(catkin REQUIRED COMPONENTS
   angles
@@ -12,10 +12,10 @@ catkin_package()
 
 include_directories(include ${catkin_INCLUDE_DIRS})
 
-add_library(${PROJECT_NAME} src/sonar_layer.cpp)
+add_library(${PROJECT_NAME} src/range_sensor_layer.cpp)
 target_link_libraries(${PROJECT_NAME} ${catkin_LIBRARIES})
 
-install(TARGETS sonar_layer
+install(TARGETS range_sensor_layer
         LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
         )
 

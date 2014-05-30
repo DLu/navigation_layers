@@ -1,5 +1,0 @@
-<library path="lib/libsonar_layer">
-  <class type="sonar_layer::SonarLayer" base_class_type="costmap_2d::Layer">
-    <description>x</description>
-  </class>
-</library>
