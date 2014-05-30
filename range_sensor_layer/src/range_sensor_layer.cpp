@@ -32,8 +32,8 @@ void RangeSensorLayer::onInitialize()
   std::string topics_ns;
   XmlRpc::XmlRpcValue topic_names(xml, &zero_offset);
 
-  nh.param("topics_namespace", topics_ns, std::string());
-  nh.param("topic_names_list", topic_names, topic_names);
+  nh.param("ns", topics_ns, std::string());
+  nh.param("topics", topic_names, topic_names);
 
   nh.param("no_readings_timeout", no_readings_timeout_, .0);
 
@@ -50,7 +50,7 @@ void RangeSensorLayer::onInitialize()
   if (topic_names.size() < 1)
   {
     // This could be an error, but I keep it as it can be useful for debug
-    ROS_WARN("Empty topic names list: sonar layer will have no effect on costmap");
+    ROS_WARN("Empty topic names list: range sensor layer will have no effect on costmap");
   }
 
   // Traverse the topic names list subscribing to all of them with the same callback method
@@ -66,8 +66,8 @@ void RangeSensorLayer::onInitialize()
       if ((topic_name.size() > 0) && (topic_name.at(topic_name.size() - 1) != '/'))
         topic_name += "/";
       topic_name += static_cast<std::string>(topic_names[i]);
-      range_subs_.push_back(nh.subscribe(topic_name, 100, &SonarLayer::incomingRange, this));
-      ROS_DEBUG("Sonar layer: subscribed to topic %s", range_subs_.back().getTopic().c_str());
+      range_subs_.push_back(nh.subscribe(topic_name, 100, &RangeSensorLayer::incomingRange, this));
+      ROS_INFO("RangeSensorLayer: subscribed to topic %s", range_subs_.back().getTopic().c_str());
     }
   }
 
@@ -145,7 +145,7 @@ void RangeSensorLayer::incomingRange(const sensor_msgs::RangeConstPtr& range)
 
   if(!tf_->waitForTransform(global_frame_, in.header.frame_id,
         in.header.stamp, ros::Duration(0.1)) ) {
-     ROS_ERROR("Sonar layer can't transform from %s to %s at %f",
+     ROS_ERROR("Range sensor layer can't transform from %s to %s at %f",
         global_frame_.c_str(), in.header.frame_id.c_str(),
         in.header.stamp.toSec());
      return;
@@ -270,7 +270,7 @@ void RangeSensorLayer::updateCosts(costmap_2d::Costmap2D& master_grid, int min_i
     if (no_readings_timeout_ > 0.0 &&
         (ros::Time::now() - last_reading_time_).toSec() > no_readings_timeout_)
     {
-      ROS_WARN_THROTTLE(2.0, "No sonar readings received for %.2f seconds, " \
+      ROS_WARN_THROTTLE(2.0, "No range readings received for %.2f seconds, " \
                              "while expected at least every %.2f seconds.",
                (ros::Time::now() - last_reading_time_).toSec(), no_readings_timeout_);
       current_ = false;
