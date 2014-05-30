@@ -15,6 +15,10 @@ include_directories(include ${catkin_INCLUDE_DIRS})
 add_library(${PROJECT_NAME} src/sonar_layer.cpp)
 target_link_libraries(${PROJECT_NAME} ${catkin_LIBRARIES})
 
+install(TARGETS sonar_layer
+        LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
+        )
+
 install(FILES costmap_plugins.xml
     DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
     )
