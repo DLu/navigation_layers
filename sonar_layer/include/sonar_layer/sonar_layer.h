@@ -24,25 +24,28 @@ public:
 private:
   void reconfigureCB(costmap_2d::GenericPluginConfig &config, uint32_t level);
   void incomingRange(const sensor_msgs::RangeConstPtr& range);
-  
+
   double gamma(double theta);
   double delta(double phi);
   double sensor_model(double r, double phi, double theta);
-  
+
   void get_deltas(double angle, double *dx, double *dy);
   void update_cell(double ox, double oy, double ot, double r, double nx, double ny);
-  
+
   double to_prob(unsigned char c){ return double(c)/costmap_2d::LETHAL_OBSTACLE; }
   unsigned char to_cost(double p){ return (unsigned char)(p*costmap_2d::LETHAL_OBSTACLE); }
-    
+
   double max_angle_, phi_v_;
   std::string global_frame_;
-  
+
   double clear_threshold_, mark_threshold_;
 
+  double no_readings_timeout_;
+  ros::Time last_reading_time_;
+  unsigned int buffered_readings_;
   std::vector<ros::Subscriber> range_subs_;
   double min_x_, min_y_, max_x_, max_y_;
-  
+
   dynamic_reconfigure::Server<costmap_2d::GenericPluginConfig> *dsrv_;
 };
 }
