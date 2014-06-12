@@ -1,0 +1,18 @@
+rolling_window: true
+publish_frequency: .5
+width: 5.0
+height: 5.0
+resolution: .025
+track_unknown_space: true
+global_frame: odom_combined
+robot_base_frame: base_link
+plugins:
+ - {name: sonar,    type: "sonar_layer::SonarLayer"}
+#    - {name: obstacles,        type: "costmap_2d::ObstacleLayer"}
+obstacles:
+    observation_sources: scan
+    track_unknown_space: true
+    scan: {data_type: LaserScan, sensor_frame: /laser, clearing: true, marking: true}
+sonar:
+  topics_namespace: /sonars
+  topic_names_list: ["front", "left", "right"]
