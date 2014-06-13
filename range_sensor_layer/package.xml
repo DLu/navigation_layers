@@ -1,7 +1,7 @@
 <package>
-  <name>sonar_layer</name>
+  <name>range_sensor_layer</name>
   <description>
-     sonar_layer
+     range_sensor_layer
   </description>
   <version>0.1.0</version>
 
@@ -10,7 +10,7 @@
 
   <license>BSD</license>
 
-  <url>http://wiki.ros.org/sonar_layer</url>
+  <url>http://wiki.ros.org/range_sensor_layer</url>
 
   <buildtool_depend>catkin</buildtool_depend>
 

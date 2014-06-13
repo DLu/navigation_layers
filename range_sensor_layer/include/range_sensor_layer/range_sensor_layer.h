@@ -1,20 +1,20 @@
-#ifndef SONAR_LAYER_H_
-#define SONAR_LAYER_H_
+#ifndef RANGE_SENSOR_LAYER_H_
+#define RANGE_SENSOR_LAYER_H_
 #include <ros/ros.h>
 #include <costmap_2d/costmap_layer.h>
 #include <costmap_2d/layered_costmap.h>
 #include <costmap_2d/GenericPluginConfig.h>
 #include <sensor_msgs/Range.h>
-//#include <sonar_layer/SonarLayerConfig.h>
+//#include <range_sensor_layer/RangeSensorLayerConfig.h>
 #include <dynamic_reconfigure/server.h>
 
-namespace sonar_layer
+namespace range_sensor_layer
 {
 
-class SonarLayer : public costmap_2d::CostmapLayer
+class RangeSensorLayer : public costmap_2d::CostmapLayer
 {
 public:
-  SonarLayer();
+  RangeSensorLayer();
 
   virtual void onInitialize();
   virtual void updateBounds(double robot_x, double robot_y, double robot_yaw, double* min_x, double* min_y, double* max_x,
