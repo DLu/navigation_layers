@@ -1,6 +1,0 @@
-<launch>
-    <include file="$(find simple_costmap_configuration)/launch/test_core.launch" />
-
-    <rosparam file="$(find simple_costmap_configuration)/params/minimal.yaml" 
-                            command="load" ns="/costmap_node/costmap" />
-</launch>
