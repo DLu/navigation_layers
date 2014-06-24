@@ -8,7 +8,9 @@ find_package(catkin REQUIRED COMPONENTS
   sensor_msgs
   pluginlib)
 
-catkin_package()
+catkin_package(
+CATKIN_DEPENDS sensor_msgs
+)
 
 include_directories(include ${catkin_INCLUDE_DIRS})
 
