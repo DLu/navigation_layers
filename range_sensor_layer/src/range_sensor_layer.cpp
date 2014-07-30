@@ -40,6 +40,8 @@ void RangeSensorLayer::onInitialize()
   nh.param("clear_threshold", clear_threshold_, .2);
   nh.param("mark_threshold", mark_threshold_, .8);
 
+  nh.param("clear_on_max_reading", clear_on_max_reading_, false);
+
   // Validate topic names list: it must be a (normally non-empty) list of strings
   if ((topic_names.valid() == false) || (topic_names.getType() != XmlRpc::XmlRpcValue::TypeArray))
   {
@@ -135,8 +137,12 @@ void RangeSensorLayer::reconfigureCB(costmap_2d::GenericPluginConfig &config, ui
 void RangeSensorLayer::incomingRange(const sensor_msgs::RangeConstPtr& range)
 {
   double r = range->range;
-  if(r<range->min_range || r>range->max_range)
+  bool clear_sensor_cone = false;
+  if (r < range->min_range)
     return;
+  else if (r > range->max_range && clear_on_max_reading_)
+    clear_sensor_cone = true;
+
   max_angle_ = range->field_of_view/2;
 
   geometry_msgs::PointStamped in, out;
@@ -215,7 +221,7 @@ void RangeSensorLayer::incomingRange(const sensor_msgs::RangeConstPtr& range)
     for(unsigned int y=by0; y<(unsigned int)by1; y++){
       double wx, wy;
       mapToWorld(x,y,wx,wy);
-      update_cell(ox, oy, theta, r, wx, wy);
+      update_cell(ox, oy, theta, r, wx, wy, clear_sensor_cone);
     }
   }
 
@@ -223,7 +229,7 @@ void RangeSensorLayer::incomingRange(const sensor_msgs::RangeConstPtr& range)
   last_reading_time_ = ros::Time::now();
 }
 
-void RangeSensorLayer::update_cell(double ox, double oy, double ot, double r, double nx, double ny)
+void RangeSensorLayer::update_cell(double ox, double oy, double ot, double r, double nx, double ny, bool clear)
 {
   unsigned int x, y;
   if(worldToMap(nx, ny, x, y)){
@@ -231,7 +237,9 @@ void RangeSensorLayer::update_cell(double ox, double oy, double ot, double r, do
     double theta = atan2(dy, dx) - ot;
     theta = angles::normalize_angle(theta);
     double phi = sqrt(dx*dx+dy*dy);
-    double sensor = sensor_model(r,phi,theta);
+    double sensor = 0.0;
+    if(!clear)
+        sensor = sensor_model(r,phi,theta);
     double prior = to_prob(getCost(x,y));
     double prob_occ = sensor * prior;
     double prob_not = (1 - sensor) * (1 - prior);
