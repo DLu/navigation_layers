@@ -141,7 +141,10 @@ void RangeSensorLayer::incomingRange(const sensor_msgs::RangeConstPtr& range)
   if (r < range->min_range)
     return;
   else if (r > range->max_range && clear_on_max_reading_)
+  {
     clear_sensor_cone = true;
+    r = range->max_range;
+  }
 
   max_angle_ = range->field_of_view/2;
 
