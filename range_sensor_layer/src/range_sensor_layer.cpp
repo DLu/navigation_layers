@@ -140,7 +140,7 @@ void RangeSensorLayer::incomingRange(const sensor_msgs::RangeConstPtr& range)
   bool clear_sensor_cone = false;
   if (r < range->min_range)
     return;
-  else if (r > range->max_range && clear_on_max_reading_)
+  else if (r >= range->max_range && clear_on_max_reading_)
   {
     clear_sensor_cone = true;
     r = range->max_range;
@@ -220,8 +220,8 @@ void RangeSensorLayer::incomingRange(const sensor_msgs::RangeConstPtr& range)
   bx1 = std::min((int)size_x_, bx1);
   by1 = std::min((int)size_y_, by1);
 
-  for(unsigned int x=bx0; x<(unsigned int)bx1; x++){
-    for(unsigned int y=by0; y<(unsigned int)by1; y++){
+  for(unsigned int x=bx0; x<=(unsigned int)bx1; x++){
+    for(unsigned int y=by0; y<=(unsigned int)by1; y++){
       double wx, wy;
       mapToWorld(x,y,wx,wy);
       update_cell(ox, oy, theta, r, wx, wy, clear_sensor_cone);
