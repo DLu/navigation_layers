@@ -9,6 +9,7 @@
     <buildtool_depend>catkin</buildtool_depend>
 
     <run_depend>range_sensor_layer</run_depend>
+    <run_depend>social_navigation_layers</run_depend>
     <export>
         <metapackage/>
     </export>
