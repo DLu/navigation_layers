@@ -5,6 +5,9 @@ Changelog for package social_navigation_layers
 0.2.3 (2014-12-10)
 ------------------
 
+Forthcoming
+-----------
+
 1.0.4 (2014-07-09)
 ------------------
 * merging Social Navigation Layer into people
