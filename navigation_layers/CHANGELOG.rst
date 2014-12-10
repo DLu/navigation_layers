@@ -2,5 +2,5 @@
 Changelog for package navigation_layers
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.2.3 (2014-12-10)
+------------------

@@ -2,5 +2,5 @@
 Changelog for package range_sensor_layer
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.2.3 (2014-12-10)
+------------------
