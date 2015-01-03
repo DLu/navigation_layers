@@ -14,6 +14,13 @@ namespace range_sensor_layer
 class RangeSensorLayer : public costmap_2d::CostmapLayer
 {
 public:
+  enum InputSensorType
+  {
+    VARIABLE,
+    FIXED,
+    ALL
+  };
+
   RangeSensorLayer();
 
   virtual void onInitialize();
@@ -23,7 +30,10 @@ public:
 
 private:
   void reconfigureCB(costmap_2d::GenericPluginConfig &config, uint32_t level);
-  void incomingRange(const sensor_msgs::RangeConstPtr& range);
+  void incomingRange(const sensor_msgs::RangeConstPtr& range_message);
+  void incomingFixedRange(const sensor_msgs::RangeConstPtr& range_message);
+  void incomingVariableRange(const sensor_msgs::RangeConstPtr& range_message);
+  void updateCostmap(sensor_msgs::Range& range_message, bool clear_sensor_cone);
 
   double gamma(double theta);
   double delta(double phi);
