@@ -1,4 +1,4 @@
-#include<range_sensor_layer/range_sensor_layer.h>
+#include <range_sensor_layer/range_sensor_layer.h>
 #include <boost/algorithm/string.hpp>
 #include <pluginlib/class_list_macros.h>
 #include <angles/angles.h>
@@ -48,6 +48,7 @@ void RangeSensorLayer::onInitialize()
   nh.param("input_sensor_type", sensor_type_name, std::string("ALL"));
 
   boost::to_upper(sensor_type_name);
+  ROS_INFO("%s: %s as input_sensor_type given", name_.c_str(), sensor_type_name.c_str());
 
   if (sensor_type_name == "VARIABLE")
     input_sensor_type = VARIABLE;
@@ -88,17 +89,19 @@ void RangeSensorLayer::onInitialize()
       topic_name += static_cast<std::string>(topic_names[i]);
 
       if (input_sensor_type == VARIABLE)
-        range_subs_.push_back(nh.subscribe(topic_name, 100, &RangeSensorLayer::incomingVariableRange, this));
+        processRangeMessageFunc_ = boost::bind(&RangeSensorLayer::processVariableRangeMsg, this, _1);
       else if (input_sensor_type == FIXED)
-        range_subs_.push_back(nh.subscribe(topic_name, 100, &RangeSensorLayer::incomingFixedRange, this));
+        processRangeMessageFunc_ = boost::bind(&RangeSensorLayer::processFixedRangeMsg, this, _1);
       else if (input_sensor_type == ALL)
-        range_subs_.push_back(nh.subscribe(topic_name, 100, &RangeSensorLayer::incomingRange, this));
+        processRangeMessageFunc_ = boost::bind(&RangeSensorLayer::processRangeMsg, this, _1);
       else
       {
         ROS_ERROR(
             "%s: Invalid input sensor type: %s. Did you make a new type and forgot to choose the subscriber for it?",
             name_.c_str(), sensor_type_name.c_str());
       }
+
+      range_subs_.push_back(nh.subscribe(topic_name, 100, &RangeSensorLayer::bufferIncomingRangeMsg, this));
 
       ROS_INFO("RangeSensorLayer: subscribed to topic %s", range_subs_.back().getTopic().c_str());
     }
@@ -165,29 +168,49 @@ void RangeSensorLayer::reconfigureCB(costmap_2d::GenericPluginConfig &config, ui
   }
 }
 
-void RangeSensorLayer::incomingRange(const sensor_msgs::RangeConstPtr& range_message)
+void RangeSensorLayer::bufferIncomingRangeMsg(const sensor_msgs::RangeConstPtr& range_message)
 {
-  if (range_message->min_range == range_message->max_range)
-    incomingFixedRange(range_message);
-  else
-    incomingVariableRange(range_message);
+  boost::mutex::scoped_lock lock(range_message_mutex_);
+  range_msgs_buffer_.push_back(*range_message);
 }
 
-void RangeSensorLayer::incomingFixedRange(const sensor_msgs::RangeConstPtr& range_message)
+void RangeSensorLayer::updateCostmap()
 {
-  double range = range_message->range;
+  std::list<sensor_msgs::Range> range_msgs_buffer_copy;
 
-  if (!isinf(range))
+  range_message_mutex_.lock();
+  range_msgs_buffer_copy = std::list<sensor_msgs::Range>(range_msgs_buffer_);
+  range_msgs_buffer_.clear();
+  range_message_mutex_.unlock();
+
+  for (std::list<sensor_msgs::Range>::iterator range_msgs_it = range_msgs_buffer_copy.begin();
+      range_msgs_it != range_msgs_buffer_copy.end(); range_msgs_it++)
   {
-    ROS_WARN(
+    processRangeMessageFunc_(*range_msgs_it);
+  }
+}
+
+void RangeSensorLayer::processRangeMsg(sensor_msgs::Range& range_message)
+{
+  if (range_message.min_range == range_message.max_range)
+    processFixedRangeMsg(range_message);
+  else
+    processVariableRangeMsg(range_message);
+}
+
+void RangeSensorLayer::processFixedRangeMsg(sensor_msgs::Range& range_message)
+{
+  if (!isinf(range_message.range))
+  {
+    ROS_ERROR_THROTTLE(1.0,
         "Fixed distance ranger (min_range == max_range) in frame %s sent invalid value. Only -Inf (== object detected) and Inf (== no object detected) are valid.",
-        range_message->header.frame_id.c_str());
+        range_message.header.frame_id.c_str());
     return;
   }
 
   bool clear_sensor_cone = false;
 
-  if (range > 0) //+inf
+  if (range_message.range > 0) //+inf
   {
     if (!clear_on_max_reading_)
       return; //no clearing at all
@@ -195,30 +218,22 @@ void RangeSensorLayer::incomingFixedRange(const sensor_msgs::RangeConstPtr& rang
     clear_sensor_cone = true;
   }
 
-  range = range_message->min_range;
+  range_message.range = range_message.min_range;
 
-  sensor_msgs::Range range_message_copy(*range_message);
-  range_message_copy.range = range;
-
-  updateCostmap(range_message_copy, clear_sensor_cone);
+  updateCostmap(range_message, clear_sensor_cone);
 }
 
-void RangeSensorLayer::incomingVariableRange(const sensor_msgs::RangeConstPtr& range_message)
+void RangeSensorLayer::processVariableRangeMsg(sensor_msgs::Range& range_message)
 {
-  double range = range_message->range;
-
-  if (range < range_message->min_range || range > range_message->max_range)
+  if (range_message.range < range_message.min_range || range_message.range > range_message.max_range)
     return;
 
   bool clear_sensor_cone = false;
 
-  if (range == range_message->max_range && clear_on_max_reading_)
+  if (range_message.range == range_message.max_range && clear_on_max_reading_)
     clear_sensor_cone = true;
 
-  sensor_msgs::Range range_message_copy(*range_message);
-  range_message_copy.range = range;
-
-  updateCostmap(range_message_copy, clear_sensor_cone);
+  updateCostmap(range_message, clear_sensor_cone);
 }
 
 void RangeSensorLayer::updateCostmap(sensor_msgs::Range& range_message, bool clear_sensor_cone)
@@ -231,7 +246,7 @@ void RangeSensorLayer::updateCostmap(sensor_msgs::Range& range_message, bool cle
 
   if(!tf_->waitForTransform(global_frame_, in.header.frame_id,
         in.header.stamp, ros::Duration(0.1)) ) {
-     ROS_ERROR("Range sensor layer can't transform from %s to %s at %f",
+     ROS_ERROR_THROTTLE(1.0, "Range sensor layer can't transform from %s to %s at %f",
         global_frame_.c_str(), in.header.frame_id.c_str(),
         in.header.stamp.toSec());
      return;
@@ -337,6 +352,8 @@ void RangeSensorLayer::updateBounds(double robot_x, double robot_y, double robot
 {
   if (layered_costmap_->isRolling())
     updateOrigin(robot_x - getSizeInMetersX() / 2, robot_y - getSizeInMetersY() / 2);
+
+  updateCostmap();
 
   *min_x = std::min(*min_x, min_x_);
   *min_y = std::min(*min_y, min_y_);

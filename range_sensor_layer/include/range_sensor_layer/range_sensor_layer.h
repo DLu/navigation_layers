@@ -30,9 +30,13 @@ public:
 
 private:
   void reconfigureCB(costmap_2d::GenericPluginConfig &config, uint32_t level);
-  void incomingRange(const sensor_msgs::RangeConstPtr& range_message);
-  void incomingFixedRange(const sensor_msgs::RangeConstPtr& range_message);
-  void incomingVariableRange(const sensor_msgs::RangeConstPtr& range_message);
+
+  void bufferIncomingRangeMsg(const sensor_msgs::RangeConstPtr& range_message);
+  void processRangeMsg(sensor_msgs::Range& range_message);
+  void processFixedRangeMsg(sensor_msgs::Range& range_message);
+  void processVariableRangeMsg(sensor_msgs::Range& range_message);
+
+  void updateCostmap();
   void updateCostmap(sensor_msgs::Range& range_message, bool clear_sensor_cone);
 
   double gamma(double theta);
@@ -44,6 +48,10 @@ private:
 
   double to_prob(unsigned char c){ return double(c)/costmap_2d::LETHAL_OBSTACLE; }
   unsigned char to_cost(double p){ return (unsigned char)(p*costmap_2d::LETHAL_OBSTACLE); }
+
+  boost::function<void (sensor_msgs::Range& range_message)> processRangeMessageFunc_;
+  boost::mutex range_message_mutex_;
+  std::list<sensor_msgs::Range> range_msgs_buffer_;
 
   double max_angle_, phi_v_;
   std::string global_frame_;
