@@ -416,4 +416,13 @@ void RangeSensorLayer::updateCosts(costmap_2d::Costmap2D& master_grid, int min_i
   current_ = true;
 }
 
+void RangeSensorLayer::reset()
+{
+  ROS_DEBUG("Reseting range sensor layer...");
+  deactivate();
+  resetMaps();
+  current_ = true;
+  activate();
+}
+
 } // end namespace
