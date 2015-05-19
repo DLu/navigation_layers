@@ -3,9 +3,8 @@
 #include <ros/ros.h>
 #include <costmap_2d/costmap_layer.h>
 #include <costmap_2d/layered_costmap.h>
-#include <costmap_2d/GenericPluginConfig.h>
 #include <sensor_msgs/Range.h>
-//#include <range_sensor_layer/RangeSensorLayerConfig.h>
+#include <range_sensor_layer/RangeSensorLayerConfig.h>
 #include <dynamic_reconfigure/server.h>
 
 namespace range_sensor_layer
@@ -29,7 +28,7 @@ public:
   virtual void updateCosts(costmap_2d::Costmap2D& master_grid, int min_i, int min_j, int max_i, int max_j);
 
 private:
-  void reconfigureCB(costmap_2d::GenericPluginConfig &config, uint32_t level);
+  void reconfigureCB(range_sensor_layer::RangeSensorLayerConfig &config, uint32_t level);
 
   void bufferIncomingRangeMsg(const sensor_msgs::RangeConstPtr& range_message);
   void processRangeMsg(sensor_msgs::Range& range_message);
@@ -65,7 +64,7 @@ private:
   std::vector<ros::Subscriber> range_subs_;
   double min_x_, min_y_, max_x_, max_y_;
 
-  dynamic_reconfigure::Server<costmap_2d::GenericPluginConfig> *dsrv_;
+  dynamic_reconfigure::Server<range_sensor_layer::RangeSensorLayerConfig> *dsrv_;
 };
 }
 #endif
