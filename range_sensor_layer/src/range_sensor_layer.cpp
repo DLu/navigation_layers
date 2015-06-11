@@ -362,14 +362,13 @@ void RangeSensorLayer::updateBounds(double robot_x, double robot_y, double robot
 
   min_x_ = min_y_ = std::numeric_limits<double>::max();
   max_x_ = max_y_ = std::numeric_limits<double>::min();
-}
 
-void RangeSensorLayer::updateCosts(costmap_2d::Costmap2D& master_grid, int min_i, int min_j, int max_i,
-                                          int max_j)
-{
   if (!enabled_)
+  {
+    current_ = true;
     return;
-
+  }
+  
   if (buffered_readings_ == 0)
   {
     if (no_readings_timeout_ > 0.0 &&
@@ -380,9 +379,15 @@ void RangeSensorLayer::updateCosts(costmap_2d::Costmap2D& master_grid, int min_i
                (ros::Time::now() - last_reading_time_).toSec(), no_readings_timeout_);
       current_ = false;
     }
-
-    return;
   }
+
+}
+
+void RangeSensorLayer::updateCosts(costmap_2d::Costmap2D& master_grid, int min_i, int min_j, int max_i,
+                                          int max_j)
+{
+  if (!enabled_)
+    return;
 
   unsigned char* master_array = master_grid.getCharMap();
   unsigned int span = master_grid.getSizeInCellsX();
