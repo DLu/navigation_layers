@@ -19,8 +19,6 @@ void RangeSensorLayer::onInitialize()
   buffered_readings_ = 0;
   last_reading_time_ = ros::Time::now();
   default_value_ = to_cost(0.5);
-  phi_v_ = 1.2;
-  max_angle_ = 12.5*M_PI/180;
 
   matchSize();
   min_x_ = min_y_ = -std::numeric_limits<double>::max();
@@ -35,13 +33,6 @@ void RangeSensorLayer::onInitialize()
 
   nh.param("ns", topics_ns, std::string());
   nh.param("topics", topic_names, topic_names);
-
-  nh.param("no_readings_timeout", no_readings_timeout_, .0);
-
-  nh.param("clear_threshold", clear_threshold_, .2);
-  nh.param("mark_threshold", mark_threshold_, .8);
-
-  nh.param("clear_on_max_reading", clear_on_max_reading_, false);
 
   InputSensorType input_sensor_type = ALL;
   std::string sensor_type_name;
@@ -107,8 +98,8 @@ void RangeSensorLayer::onInitialize()
     }
   }
 
-  dsrv_ = new dynamic_reconfigure::Server<costmap_2d::GenericPluginConfig>(nh);
-  dynamic_reconfigure::Server<costmap_2d::GenericPluginConfig>::CallbackType cb = boost::bind(
+  dsrv_ = new dynamic_reconfigure::Server<range_sensor_layer::RangeSensorLayerConfig>(nh);
+  dynamic_reconfigure::Server<range_sensor_layer::RangeSensorLayerConfig>::CallbackType cb = boost::bind(
       &RangeSensorLayer::reconfigureCB, this, _1, _2);
   dsrv_->setCallback(cb);
   global_frame_ = layered_costmap_->getGlobalFrameID();
@@ -159,8 +150,15 @@ double RangeSensorLayer::sensor_model(double r, double phi, double theta)
 }
 
 
-void RangeSensorLayer::reconfigureCB(costmap_2d::GenericPluginConfig &config, uint32_t level)
+void RangeSensorLayer::reconfigureCB(range_sensor_layer::RangeSensorLayerConfig &config, uint32_t level)
 {
+  phi_v_ = config.phi;
+  max_angle_ = config.max_angle;
+  no_readings_timeout_ = config.no_readings_timeout;
+  clear_threshold_ = config.clear_threshold;
+  mark_threshold_ = config.mark_threshold;
+  clear_on_max_reading_ = config.clear_on_max_reading;
+    
   if(enabled_ != config.enabled)
   {
     enabled_ = config.enabled;
