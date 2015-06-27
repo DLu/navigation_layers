@@ -398,7 +398,11 @@ void RangeSensorLayer::updateCosts(costmap_2d::Costmap2D& master_grid, int min_i
     {
       unsigned char prob = costmap_[it];
       unsigned char current;
-      if(prob>mark)
+      if(prob==costmap_2d::NO_INFORMATION){
+        it++;
+        continue;
+      }
+      else if(prob>mark)
         current = costmap_2d::LETHAL_OBSTACLE;
       else if(prob<clear)
         current = costmap_2d::FREE_SPACE;
@@ -417,6 +421,15 @@ void RangeSensorLayer::updateCosts(costmap_2d::Costmap2D& master_grid, int min_i
 
   buffered_readings_ = 0;
   current_ = true;
+}
+
+void RangeSensorLayer::reset()
+{
+  ROS_DEBUG("Reseting range sensor layer...");
+  deactivate();
+  resetMaps();
+  current_ = true;
+  activate();
 }
 
 } // end namespace
