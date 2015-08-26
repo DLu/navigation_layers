@@ -49,9 +49,9 @@ namespace social_navigation_layers
               pt.point.z += person.velocity.z;
               tf_.transformPoint(global_frame, pt, opt);
               
-              tpt.velocity.x = tpt.position.x - opt.point.x;
-              tpt.velocity.y = tpt.position.y - opt.point.y;
-              tpt.velocity.z = tpt.position.z - opt.point.z;
+              tpt.velocity.x = opt.point.x - tpt.position.x;
+              tpt.velocity.y = opt.point.y - tpt.position.y;
+              tpt.velocity.z = opt.point.z - tpt.position.z;
               
               transformed_people_.push_back(tpt);
               
