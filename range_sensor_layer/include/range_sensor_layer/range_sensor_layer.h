@@ -9,6 +9,7 @@
 #include <dynamic_reconfigure/server.h>
 #include <list>
 #include <string>
+#include <unordered_map>
 #include <vector>
 
 namespace range_sensor_layer
@@ -37,7 +38,7 @@ public:
 private:
   void reconfigureCB(range_sensor_layer::RangeSensorLayerConfig &config, uint32_t level);
 
-  void bufferIncomingRangeMsg(const sensor_msgs::RangeConstPtr& range_message);
+  void bufferIncomingRangeMsg(const sensor_msgs::RangeConstPtr& range_message, const std::string& topic);
   void processRangeMsg(sensor_msgs::Range& range_message);
   void processFixedRangeMsg(sensor_msgs::Range& range_message);
   void processVariableRangeMsg(sensor_msgs::Range& range_message);
@@ -64,7 +65,8 @@ private:
 
   boost::function<void(sensor_msgs::Range& range_message)> processRangeMessageFunc_;
   boost::mutex range_message_mutex_;
-  std::list<sensor_msgs::Range> range_msgs_buffer_;
+  size_t ranges_buffer_size_ { 0 };
+  std::unordered_map<std::string, std::list<sensor_msgs::Range>> range_msgs_buffers_;
 
   double max_angle_, phi_v_;
   double inflate_cone_;
