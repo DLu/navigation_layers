@@ -34,6 +34,10 @@ void RangeSensorLayer::onInitialize()
   nh.param("ns", topics_ns, std::string());
   nh.param("topics", topic_names, topic_names);
 
+  int size;
+  nh.param("ranges_buffer_size", size, 1);
+  range_msgs_buffer_size_ = size;
+
   InputSensorType input_sensor_type = ALL;
   std::string sensor_type_name;
   nh.param("input_sensor_type", sensor_type_name, std::string("ALL"));
@@ -92,7 +96,9 @@ void RangeSensorLayer::onInitialize()
             name_.c_str(), sensor_type_name.c_str());
       }
 
-      range_subs_.push_back(nh.subscribe(topic_name, 100, &RangeSensorLayer::bufferIncomingRangeMsg, this));
+      range_subs_.push_back(nh.subscribe<sensor_msgs::Range>(topic_name, 100,
+                                                             boost::bind(&RangeSensorLayer::bufferIncomingRangeMsg,
+                                                                         this, _1, topic_name)));
 
       ROS_INFO("RangeSensorLayer: subscribed to topic %s", range_subs_.back().getTopic().c_str());
     }
@@ -158,33 +164,50 @@ void RangeSensorLayer::reconfigureCB(range_sensor_layer::RangeSensorLayerConfig 
   clear_threshold_ = config.clear_threshold;
   mark_threshold_ = config.mark_threshold;
   clear_on_max_reading_ = config.clear_on_max_reading;
-    
+
   if(enabled_ != config.enabled)
   {
     enabled_ = config.enabled;
     current_ = false;
   }
+
+  if (config.ranges_buffer_size < range_msgs_buffer_size_)
+  {
+    boost::mutex::scoped_lock lock(range_message_mutex_);
+    std::unordered_map<std::string, std::list<sensor_msgs::Range>>::iterator buffer_it;
+    for(buffer_it = range_msgs_buffers_.begin(); buffer_it != range_msgs_buffers_.end(); buffer_it++)
+    {
+      while (buffer_it->second.size() > config.ranges_buffer_size)
+        buffer_it->second.pop_front();
+    }
+  }
+  range_msgs_buffer_size_ = config.ranges_buffer_size;
 }
 
-void RangeSensorLayer::bufferIncomingRangeMsg(const sensor_msgs::RangeConstPtr& range_message)
+void RangeSensorLayer::bufferIncomingRangeMsg(const sensor_msgs::RangeConstPtr& range_message,
+                                              const std::string& topic)
 {
   boost::mutex::scoped_lock lock(range_message_mutex_);
-  range_msgs_buffer_.push_back(*range_message);
+  range_msgs_buffers_[topic].push_back(*range_message);
+  if (range_msgs_buffers_[topic].size() > range_msgs_buffer_size_)
+    range_msgs_buffers_[topic].pop_front();
 }
 
 void RangeSensorLayer::updateCostmap()
 {
-  std::list<sensor_msgs::Range> range_msgs_buffer_copy;
-
-  range_message_mutex_.lock();
-  range_msgs_buffer_copy = std::list<sensor_msgs::Range>(range_msgs_buffer_);
-  range_msgs_buffer_.clear();
-  range_message_mutex_.unlock();
-
-  for (std::list<sensor_msgs::Range>::iterator range_msgs_it = range_msgs_buffer_copy.begin();
-      range_msgs_it != range_msgs_buffer_copy.end(); range_msgs_it++)
+  std::unordered_map<std::string, std::list<sensor_msgs::Range>>::iterator buffer_it;
+  for(buffer_it = range_msgs_buffers_.begin(); buffer_it != range_msgs_buffers_.end(); buffer_it++)
   {
-    processRangeMessageFunc_(*range_msgs_it);
+    range_message_mutex_.lock();
+    std::list<sensor_msgs::Range> range_msgs_buffer_copy = std::list<sensor_msgs::Range>(buffer_it->second);
+    buffer_it->second.clear();
+    range_message_mutex_.unlock();
+
+    for (std::list<sensor_msgs::Range>::iterator range_msgs_it = range_msgs_buffer_copy.begin();
+        range_msgs_it != range_msgs_buffer_copy.end(); range_msgs_it++)
+    {
+      processRangeMessageFunc_(*range_msgs_it);
+    }
   }
 }
 
@@ -242,11 +265,9 @@ void RangeSensorLayer::updateCostmap(sensor_msgs::Range& range_message, bool cle
   in.header.stamp = range_message.header.stamp;
   in.header.frame_id = range_message.header.frame_id;
 
-  if(!tf_->waitForTransform(global_frame_, in.header.frame_id,
-        in.header.stamp, ros::Duration(0.1)) ) {
+  if(!tf_->waitForTransform(global_frame_, in.header.frame_id, in.header.stamp, ros::Duration(0.1)) ) {
      ROS_ERROR_THROTTLE(1.0, "Range sensor layer can't transform from %s to %s at %f",
-        global_frame_.c_str(), in.header.frame_id.c_str(),
-        in.header.stamp.toSec());
+        global_frame_.c_str(), in.header.frame_id.c_str(), in.header.stamp.toSec());
      return;
   }
 
@@ -340,13 +361,13 @@ void RangeSensorLayer::update_cell(double ox, double oy, double ot, double r, do
 
     //ROS_INFO("%f %f | %f %f = %f", dx, dy, theta, phi, sensor);
     //ROS_INFO("%f | %f %f | %f", prior, prob_occ, prob_not, new_prob);
-      unsigned char c = to_cost(new_prob);
-      setCost(x,y,c);
+    unsigned char c = to_cost(new_prob);
+    setCost(x,y,c);
   }
 }
 
-void RangeSensorLayer::updateBounds(double robot_x, double robot_y, double robot_yaw, double* min_x,
-                                           double* min_y, double* max_x, double* max_y)
+void RangeSensorLayer::updateBounds(double robot_x, double robot_y, double robot_yaw,
+                                    double* min_x, double* min_y, double* max_x, double* max_y)
 {
   if (layered_costmap_->isRolling())
     updateOrigin(robot_x - getSizeInMetersX() / 2, robot_y - getSizeInMetersY() / 2);

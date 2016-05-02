@@ -1,5 +1,8 @@
 #ifndef RANGE_SENSOR_LAYER_H_
 #define RANGE_SENSOR_LAYER_H_
+
+#include <unordered_map>
+
 #include <ros/ros.h>
 #include <costmap_2d/costmap_layer.h>
 #include <costmap_2d/layered_costmap.h>
@@ -23,15 +26,15 @@ public:
   RangeSensorLayer();
 
   virtual void onInitialize();
-  virtual void updateBounds(double robot_x, double robot_y, double robot_yaw, double* min_x, double* min_y, double* max_x,
-                             double* max_y);
+  virtual void updateBounds(double robot_x, double robot_y, double robot_yaw,
+                            double* min_x, double* min_y, double* max_x, double* max_y);
   virtual void updateCosts(costmap_2d::Costmap2D& master_grid, int min_i, int min_j, int max_i, int max_j);
   virtual void reset();
 
 private:
   void reconfigureCB(range_sensor_layer::RangeSensorLayerConfig &config, uint32_t level);
 
-  void bufferIncomingRangeMsg(const sensor_msgs::RangeConstPtr& range_message);
+  void bufferIncomingRangeMsg(const sensor_msgs::RangeConstPtr& range_message, const std::string& topic);
   void processRangeMsg(sensor_msgs::Range& range_message);
   void processFixedRangeMsg(sensor_msgs::Range& range_message);
   void processVariableRangeMsg(sensor_msgs::Range& range_message);
@@ -51,7 +54,8 @@ private:
 
   boost::function<void (sensor_msgs::Range& range_message)> processRangeMessageFunc_;
   boost::mutex range_message_mutex_;
-  std::list<sensor_msgs::Range> range_msgs_buffer_;
+  size_t range_msgs_buffer_size_;
+  std::unordered_map<std::string, std::list<sensor_msgs::Range>> range_msgs_buffers_;
 
   double max_angle_, phi_v_;
   std::string global_frame_;
