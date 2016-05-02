@@ -99,8 +99,8 @@ void RangeSensorLayer::onInitialize()
   }
 
   dsrv_ = new dynamic_reconfigure::Server<range_sensor_layer::RangeSensorLayerConfig>(nh);
-  dynamic_reconfigure::Server<range_sensor_layer::RangeSensorLayerConfig>::CallbackType cb = boost::bind(
-      &RangeSensorLayer::reconfigureCB, this, _1, _2);
+  dynamic_reconfigure::Server<range_sensor_layer::RangeSensorLayerConfig>::CallbackType cb =
+      boost::bind(&RangeSensorLayer::reconfigureCB, this, _1, _2);
   dsrv_->setCallback(cb);
   global_frame_ = layered_costmap_->getGlobalFrameID();
 }
@@ -108,45 +108,45 @@ void RangeSensorLayer::onInitialize()
 
 double RangeSensorLayer::gamma(double theta)
 {
-    if(fabs(theta)>max_angle_)
-        return 0.0;
-    else
-        return 1 - pow(theta/max_angle_, 2);
+  if (fabs(theta) > max_angle_)
+    return 0.0;
+  else
+    return 1 - pow(theta / max_angle_, 2);
 }
 
 double RangeSensorLayer::delta(double phi)
 {
-    return 1 - (1+tanh(2*(phi-phi_v_)))/2;
+  return 1 - (1 + tanh(2 * (phi - phi_v_))) / 2;
 }
 
 void RangeSensorLayer::get_deltas(double angle, double *dx, double *dy)
 {
-    double ta = tan(angle);
-    if(ta==0)
-        *dx = 0;
-    else
-        *dx = resolution_ / ta;
+  double ta = tan(angle);
+  if (ta == 0)
+    *dx = 0;
+  else
+    *dx = resolution_ / ta;
 
-    *dx = copysign(*dx, cos(angle));
-    *dy = copysign(resolution_, sin(angle));
+  *dx = copysign(*dx, cos(angle));
+  *dy = copysign(resolution_, sin(angle));
 }
 
 double RangeSensorLayer::sensor_model(double r, double phi, double theta)
 {
-    double lbda = delta(phi)*gamma(theta);
+  double lbda = delta(phi)*gamma(theta);
 
-    double delta = resolution_;
+  double delta = resolution_;
 
-    if(phi >= 0.0 and phi < r - 2 * delta * r)
-        return (1- lbda) * (0.5);
-    else if(phi < r - delta * r)
-        return lbda* 0.5 * pow((phi - (r - 2*delta*r))/(delta*r), 2)+(1-lbda)*.5;
-    else if(phi < r + delta * r){
-        double J = (r-phi)/(delta*r);
-        return lbda * ((1-(0.5)*pow(J,2)) -0.5) + 0.5;
-    }
-    else
-        return 0.5;
+  if(phi >= 0.0 and phi < r - 2 * delta * r)
+    return (1- lbda) * (0.5);
+  else if(phi < r - delta * r)
+    return lbda* 0.5 * pow((phi - (r - 2*delta*r))/(delta*r), 2)+(1-lbda)*.5;
+  else if(phi < r + delta * r){
+    double J = (r-phi)/(delta*r);
+    return lbda * ((1-(0.5)*pow(J,2)) -0.5) + 0.5;
+  }
+  else
+    return 0.5;
 }
 
 
@@ -154,6 +154,7 @@ void RangeSensorLayer::reconfigureCB(range_sensor_layer::RangeSensorLayerConfig 
 {
   phi_v_ = config.phi;
   max_angle_ = config.max_angle;
+  inflate_cone_ = config.inflate_cone;
   no_readings_timeout_ = config.no_readings_timeout;
   clear_threshold_ = config.clear_threshold;
   mark_threshold_ = config.mark_threshold;
@@ -242,12 +243,12 @@ void RangeSensorLayer::updateCostmap(sensor_msgs::Range& range_message, bool cle
   in.header.stamp = range_message.header.stamp;
   in.header.frame_id = range_message.header.frame_id;
 
-  if(!tf_->waitForTransform(global_frame_, in.header.frame_id,
-        in.header.stamp, ros::Duration(0.1)) ) {
-     ROS_ERROR_THROTTLE(1.0, "Range sensor layer can't transform from %s to %s at %f",
+  if(!tf_->waitForTransform(global_frame_, in.header.frame_id, in.header.stamp, ros::Duration(0.1)) )
+  {
+    ROS_ERROR_THROTTLE(1.0, "Range sensor layer can't transform from %s to %s at %f",
         global_frame_.c_str(), in.header.frame_id.c_str(),
         in.header.stamp.toSec());
-     return;
+    return;
   }
 
   tf_->transformPoint (global_frame_, in, out);
@@ -261,16 +262,19 @@ void RangeSensorLayer::updateCostmap(sensor_msgs::Range& range_message, bool cle
   double tx = out.point.x, ty = out.point.y;
 
   // calculate target props
-  double dx = tx-ox, dy = ty-oy,
-        theta = atan2(dy,dx), d = sqrt(dx*dx+dy*dy);
+  double dx = tx-ox, dy = ty-oy, theta = atan2(dy,dx), d = sqrt(dx*dx+dy*dy);
 
   // Integer Bounds of Update
   int bx0, by0, bx1, by1;
 
+  // Triangle that will be really updated; the other cells within bounds are ignored
+  // This triangle is formed by the origin and left and right sides of sonar cone
+  int Ox, Oy, Ax, Ay, Bx, By;
+
   // Bounds includes the origin
-  worldToMapNoBounds(ox, oy, bx0, by0);
-  bx1 = bx0;
-  by1 = by0;
+  worldToMapNoBounds(ox, oy, Ox, Oy);
+  bx1 = bx0 = Ox;
+  by1 = by0 = Oy;
   touch(ox, oy, &min_x_, &min_y_, &max_x_, &max_y_);
 
   // Update Map with Target Point
@@ -281,27 +285,26 @@ void RangeSensorLayer::updateCostmap(sensor_msgs::Range& range_message, bool cle
   }
 
   double mx, my;
-  int a, b;
 
   // Update left side of sonar cone
   mx = ox + cos(theta-max_angle_) * d * 1.2;
   my = oy + sin(theta-max_angle_) * d * 1.2;
-  worldToMapNoBounds(mx, my, a, b);
-  bx0 = std::min(bx0, a);
-  bx1 = std::max(bx1, a);
-  by0 = std::min(by0, b);
-  by1 = std::max(by1, b);
+  worldToMapNoBounds(mx, my, Ax, Ay);
+  bx0 = std::min(bx0, Ax);
+  bx1 = std::max(bx1, Ax);
+  by0 = std::min(by0, Ay);
+  by1 = std::max(by1, Ay);
   touch(mx, my, &min_x_, &min_y_, &max_x_, &max_y_);
 
   // Update right side of sonar cone
   mx = ox + cos(theta+max_angle_) * d * 1.2;
   my = oy + sin(theta+max_angle_) * d * 1.2;
 
-  worldToMapNoBounds(mx, my, a, b);
-  bx0 = std::min(bx0, a);
-  bx1 = std::max(bx1, a);
-  by0 = std::min(by0, b);
-  by1 = std::max(by1, b);
+  worldToMapNoBounds(mx, my, Bx, By);
+  bx0 = std::min(bx0, Bx);
+  bx1 = std::max(bx1, Bx);
+  by0 = std::min(by0, By);
+  by1 = std::max(by1, By);
   touch(mx, my, &min_x_, &min_y_, &max_x_, &max_y_);
 
   // Limit Bounds to Grid
@@ -312,9 +315,28 @@ void RangeSensorLayer::updateCostmap(sensor_msgs::Range& range_message, bool cle
 
   for(unsigned int x=bx0; x<=(unsigned int)bx1; x++){
     for(unsigned int y=by0; y<=(unsigned int)by1; y++){
-      double wx, wy;
-      mapToWorld(x,y,wx,wy);
-      update_cell(ox, oy, theta, range_message.range, wx, wy, clear_sensor_cone);
+      bool update_xy_cell = true;
+
+      // Unless inflate_cone_ is set to 100 %, we update cells only within the (partially inflated) sensor cone,
+      // projected on the costmap as a triangle. 0 % corresponds to just the triangle, but if your sensor fov is
+      // very narrow, the covered area can become zero due to cell discretization. See wiki description for more
+      // details
+      if (inflate_cone_ < 1.0){
+        // Determine barycentric coordinates
+        int w0 = orient2d(Ax, Ay, Bx, By, x, y);
+        int w1 = orient2d(Bx, By, Ox, Oy, x, y);
+        int w2 = orient2d(Ox, Oy, Ax, Ay, x, y);
+
+        // Barycentric coordinates inside area threshold; this is not mathematically sound at all, but it works!
+        float bcciath = -inflate_cone_*area(Ax, Ay, Bx, By, Ox, Oy);
+        update_xy_cell = w0 >= bcciath && w1 >= bcciath && w2 >= bcciath;
+      }
+
+      if (update_xy_cell){
+        double wx, wy;
+        mapToWorld(x,y,wx,wy);
+        update_cell(ox, oy, theta, range_message.range, wx, wy, clear_sensor_cone);
+      }
     }
   }
 
@@ -332,7 +354,7 @@ void RangeSensorLayer::update_cell(double ox, double oy, double ot, double r, do
     double phi = sqrt(dx*dx+dy*dy);
     double sensor = 0.0;
     if(!clear)
-        sensor = sensor_model(r,phi,theta);
+      sensor = sensor_model(r,phi,theta);
     double prior = to_prob(getCost(x,y));
     double prob_occ = sensor * prior;
     double prob_not = (1 - sensor) * (1 - prior);
@@ -340,13 +362,13 @@ void RangeSensorLayer::update_cell(double ox, double oy, double ot, double r, do
 
     //ROS_INFO("%f %f | %f %f = %f", dx, dy, theta, phi, sensor);
     //ROS_INFO("%f | %f %f | %f", prior, prob_occ, prob_not, new_prob);
-      unsigned char c = to_cost(new_prob);
-      setCost(x,y,c);
+    unsigned char c = to_cost(new_prob);
+    setCost(x,y,c);
   }
 }
 
-void RangeSensorLayer::updateBounds(double robot_x, double robot_y, double robot_yaw, double* min_x,
-                                           double* min_y, double* max_x, double* max_y)
+void RangeSensorLayer::updateBounds(double robot_x, double robot_y, double robot_yaw,
+                                    double* min_x, double* min_y, double* max_x, double* max_y)
 {
   if (layered_costmap_->isRolling())
     updateOrigin(robot_x - getSizeInMetersX() / 2, robot_y - getSizeInMetersY() / 2);
@@ -381,8 +403,7 @@ void RangeSensorLayer::updateBounds(double robot_x, double robot_y, double robot
 
 }
 
-void RangeSensorLayer::updateCosts(costmap_2d::Costmap2D& master_grid, int min_i, int min_j, int max_i,
-                                          int max_j)
+void RangeSensorLayer::updateCosts(costmap_2d::Costmap2D& master_grid, int min_i, int min_j, int max_i, int max_j)
 {
   if (!enabled_)
     return;
