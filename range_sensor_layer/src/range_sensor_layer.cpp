@@ -432,4 +432,14 @@ void RangeSensorLayer::reset()
   activate();
 }
 
+void RangeSensorLayer::deactivate()
+{
+  range_msgs_buffer_.clear();
+}
+
+void RangeSensorLayer::activate()
+{
+  range_msgs_buffer_.clear();
+}
+
 } // end namespace
