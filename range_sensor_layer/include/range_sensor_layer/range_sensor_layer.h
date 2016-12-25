@@ -27,6 +27,8 @@ public:
                              double* max_y);
   virtual void updateCosts(costmap_2d::Costmap2D& master_grid, int min_i, int min_j, int max_i, int max_j);
   virtual void reset();
+  virtual void deactivate();
+  virtual void activate();
 
 private:
   void reconfigureCB(range_sensor_layer::RangeSensorLayerConfig &config, uint32_t level);
