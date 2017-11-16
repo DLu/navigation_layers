@@ -23,8 +23,8 @@ public:
   RangeSensorLayer();
 
   virtual void onInitialize();
-  virtual void updateBounds(double robot_x, double robot_y, double robot_yaw, double* min_x, double* min_y, double* max_x,
-                             double* max_y);
+  virtual void updateBounds(double robot_x, double robot_y, double robot_yaw,
+                            double* min_x, double* min_y, double* max_x, double* max_y);
   virtual void updateCosts(costmap_2d::Costmap2D& master_grid, int min_i, int min_j, int max_i, int max_j);
   virtual void reset();
   virtual void deactivate();
@@ -56,6 +56,7 @@ private:
   std::list<sensor_msgs::Range> range_msgs_buffer_;
 
   double max_angle_, phi_v_;
+  double inflate_cone_;
   std::string global_frame_;
 
   double clear_threshold_, mark_threshold_;
@@ -68,6 +69,17 @@ private:
   double min_x_, min_y_, max_x_, max_y_;
 
   dynamic_reconfigure::Server<range_sensor_layer::RangeSensorLayerConfig> *dsrv_;
+
+
+  float area(int x1, int y1, int x2, int y2, int x3, int y3)
+  {
+     return fabs((x1*(y2-y3) + x2*(y3-y1)+ x3*(y1-y2))/2.0);
+  };
+
+  int orient2d(int Ax, int Ay, int Bx, int By, int Cx, int Cy)
+  {
+      return (Bx-Ax)*(Cy-Ay) - (By-Ay)*(Cx-Ax);
+  };
 };
 }
 #endif
