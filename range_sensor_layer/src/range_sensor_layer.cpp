@@ -153,7 +153,6 @@ double RangeSensorLayer::sensor_model(double r, double phi, double theta)
 void RangeSensorLayer::reconfigureCB(range_sensor_layer::RangeSensorLayerConfig &config, uint32_t level)
 {
   phi_v_ = config.phi;
-  max_angle_ = config.max_angle;
   inflate_cone_ = config.inflate_cone;
   no_readings_timeout_ = config.no_readings_timeout;
   clear_threshold_ = config.clear_threshold;
