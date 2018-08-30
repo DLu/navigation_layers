@@ -1,4 +1,4 @@
-<package>
+<package format="2">
     <name>navigation_layers</name>
     <version>0.3.1</version>
     <description>Extra navigation layers.</description>
@@ -7,9 +7,8 @@
     <license>BSD</license>  
 
     <buildtool_depend>catkin</buildtool_depend>
-
-    <run_depend>range_sensor_layer</run_depend>
-    <run_depend>social_navigation_layers</run_depend>
+    <exec_depend>range_sensor_layer</exec_depend>
+    <exec_depend>social_navigation_layers</exec_depend>
     <export>
         <metapackage/>
     </export>

@@ -1,9 +1,9 @@
-<package>
+<package format="2">
   <name>range_sensor_layer</name>
+  <version>0.3.1</version>
   <description>
      Navigation Layer for Range sensors like sonar and IR
   </description>
-  <version>0.3.1</version>
 
   <maintainer email="davidvlu@gmail.com">David V. Lu!!</maintainer>
   <author>David!!</author>
@@ -13,19 +13,13 @@
   <url>http://wiki.ros.org/range_sensor_layer</url>
 
   <buildtool_depend>catkin</buildtool_depend>
-
-  <build_depend>roscpp</build_depend>
-  <build_depend>costmap_2d</build_depend>
-  <build_depend>sensor_msgs</build_depend>
-  <build_depend>pluginlib</build_depend>
-  <build_depend>angles</build_depend>
-  <build_depend>rospy</build_depend>
-  <run_depend>roscpp</run_depend>
-  <run_depend>costmap_2d</run_depend>
-  <run_depend>sensor_msgs</run_depend>
-  <run_depend>pluginlib</run_depend>
-  <run_depend>angles</run_depend>
-  <run_depend>rospy</run_depend>
+  <depend>angles</depend>
+  <depend>costmap_2d</depend>
+  <depend>dynamic_reconfigure</depend>
+  <depend>pluginlib</depend>
+  <depend>roscpp</depend>
+  <depend>rospy</depend>
+  <depend>sensor_msgs</depend>
 
   <export>
     <costmap_2d plugin="${prefix}/costmap_plugins.xml"/>
