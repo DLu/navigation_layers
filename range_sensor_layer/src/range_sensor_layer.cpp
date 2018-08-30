@@ -1,5 +1,6 @@
 #include <range_sensor_layer/range_sensor_layer.h>
 #include <boost/algorithm/string.hpp>
+#include <geometry_msgs/PointStamped.h>
 #include <pluginlib/class_list_macros.h>
 #include <angles/angles.h>
 
@@ -158,7 +159,7 @@ void RangeSensorLayer::reconfigureCB(range_sensor_layer::RangeSensorLayerConfig 
   clear_threshold_ = config.clear_threshold;
   mark_threshold_ = config.mark_threshold;
   clear_on_max_reading_ = config.clear_on_max_reading;
-    
+
   if(enabled_ != config.enabled)
   {
     enabled_ = config.enabled;
@@ -242,7 +243,7 @@ void RangeSensorLayer::updateCostmap(sensor_msgs::Range& range_message, bool cle
   in.header.stamp = range_message.header.stamp;
   in.header.frame_id = range_message.header.frame_id;
 
-  if(!tf_->waitForTransform(global_frame_, in.header.frame_id, in.header.stamp, ros::Duration(0.1)) )
+  if(!tf_->canTransform(global_frame_, in.header.frame_id, in.header.stamp, ros::Duration(0.1)) )
   {
     ROS_ERROR_THROTTLE(1.0, "Range sensor layer can't transform from %s to %s at %f",
         global_frame_.c_str(), in.header.frame_id.c_str(),
@@ -250,13 +251,13 @@ void RangeSensorLayer::updateCostmap(sensor_msgs::Range& range_message, bool cle
     return;
   }
 
-  tf_->transformPoint (global_frame_, in, out);
+  tf_->transform(in, out, global_frame_);
 
   double ox = out.point.x, oy = out.point.y;
 
   in.point.x = range_message.range;
 
-  tf_->transformPoint(global_frame_, in, out);
+  tf_->transform(in, out, global_frame_);
 
   double tx = out.point.x, ty = out.point.y;
 
@@ -387,7 +388,7 @@ void RangeSensorLayer::updateBounds(double robot_x, double robot_y, double robot
     current_ = true;
     return;
   }
-  
+
   if (buffered_readings_ == 0)
   {
     if (no_readings_timeout_ > 0.0 &&
