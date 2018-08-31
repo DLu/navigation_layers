@@ -5,8 +5,8 @@ Changelog for package social_navigation_layers
 0.2.3 (2014-12-10)
 ------------------
 
-Forthcoming
------------
+0.4.0 (2018-08-31)
+------------------
 * Clean up with roscompile
 * Contributors: David V. Lu
 

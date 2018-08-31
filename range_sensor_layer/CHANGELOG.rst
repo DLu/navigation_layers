@@ -2,8 +2,8 @@
 Changelog for package range_sensor_layer
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.4.0 (2018-08-31)
+------------------
 * Clean up with roscompile
 * range sensor layer: Remove parameter max_angle (`#38 <https://github.com/DLu/navigation_layers/issues/38>`_)
   Any value set for max_angle gets overwritten in updateCostmap() so the

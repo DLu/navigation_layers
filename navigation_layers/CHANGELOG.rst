@@ -2,8 +2,8 @@
 Changelog for package navigation_layers
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.4.0 (2018-08-31)
+------------------
 * Clean up with roscompile
 * Contributors: David V. Lu
 
