@@ -28,7 +28,6 @@ namespace social_navigation_layers
       std::list<people_msgs::Person> transformed_people_;
       ros::Duration people_keep_time_;
       boost::recursive_mutex lock_;
-      tf::TransformListener tf_;
       bool first_time_;
       double last_min_x_, last_min_y_, last_max_x_, last_max_y_;
   };
