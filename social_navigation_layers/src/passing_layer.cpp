@@ -1,4 +1,5 @@
 #include <social_navigation_layers/proxemic_layer.h>
+#include <geometry_msgs/PointStamped.h>
 #include <pluginlib/class_list_macros.h>
 
 #include <angles/angles.h>
@@ -28,7 +29,7 @@ namespace social_navigation_layers
               pt.point.y = person.position.y;
               pt.point.z = person.position.z;
               pt.header.frame_id = people_list_.header.frame_id;
-              tf_.transformPoint(global_frame, pt, opt);
+              tf_->transform(pt, opt, global_frame);
               tpt.position.x = opt.point.x;
               tpt.position.y = opt.point.y;
               tpt.position.z = opt.point.z;
@@ -36,7 +37,7 @@ namespace social_navigation_layers
               pt.point.x += person.velocity.x;
               pt.point.y += person.velocity.y;
               pt.point.z += person.velocity.z;
-              tf_.transformPoint(global_frame, pt, opt);
+              tf_->transform(pt, opt, global_frame);
               
               tpt.velocity.x = tpt.position.x - opt.point.x;
               tpt.velocity.y = tpt.position.y - opt.point.y;
@@ -54,21 +55,21 @@ namespace social_navigation_layers
               *max_y = std::max(*max_y, tpt.position.y + point);
               
             }
-            catch(tf::LookupException& ex) {
+            catch(tf2::LookupException& ex) {
               ROS_ERROR("No Transform available Error: %s\n", ex.what());
               continue;
             }
-            catch(tf::ConnectivityException& ex) {
+            catch(tf2::ConnectivityException& ex) {
               ROS_ERROR("Connectivity Error: %s\n", ex.what());
               continue;
             }
-            catch(tf::ExtrapolationException& ex) {
+            catch(tf2::ExtrapolationException& ex) {
               ROS_ERROR("Extrapolation Error: %s\n", ex.what());
               continue;
             }
         }
     }
-    
+
     virtual void updateCosts(costmap_2d::Costmap2D& master_grid, int min_i, int min_j, int max_i, int max_j){
         boost::recursive_mutex::scoped_lock lock(lock_);
         if(!enabled_) return;
