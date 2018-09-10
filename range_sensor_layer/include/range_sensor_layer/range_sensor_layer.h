@@ -1,11 +1,15 @@
-#ifndef RANGE_SENSOR_LAYER_H_
-#define RANGE_SENSOR_LAYER_H_
+// Copyright 2018 David V. Lu!!
+#ifndef RANGE_SENSOR_LAYER_RANGE_SENSOR_LAYER_H_
+#define RANGE_SENSOR_LAYER_RANGE_SENSOR_LAYER_H_
 #include <ros/ros.h>
 #include <costmap_2d/costmap_layer.h>
 #include <costmap_2d/layered_costmap.h>
 #include <sensor_msgs/Range.h>
 #include <range_sensor_layer/RangeSensorLayerConfig.h>
 #include <dynamic_reconfigure/server.h>
+#include <list>
+#include <string>
+#include <vector>
 
 namespace range_sensor_layer
 {
@@ -48,10 +52,16 @@ private:
   void get_deltas(double angle, double *dx, double *dy);
   void update_cell(double ox, double oy, double ot, double r, double nx, double ny, bool clear);
 
-  double to_prob(unsigned char c){ return double(c)/costmap_2d::LETHAL_OBSTACLE; }
-  unsigned char to_cost(double p){ return (unsigned char)(p*costmap_2d::LETHAL_OBSTACLE); }
+  double to_prob(unsigned char c)
+  {
+    return static_cast<double>(c) / costmap_2d::LETHAL_OBSTACLE;
+  }
+  unsigned char to_cost(double p)
+  {
+    return static_cast<unsigned char>(p * costmap_2d::LETHAL_OBSTACLE);
+  }
 
-  boost::function<void (sensor_msgs::Range& range_message)> processRangeMessageFunc_;
+  boost::function<void(sensor_msgs::Range& range_message)> processRangeMessageFunc_;
   boost::mutex range_message_mutex_;
   std::list<sensor_msgs::Range> range_msgs_buffer_;
 
@@ -73,13 +83,13 @@ private:
 
   float area(int x1, int y1, int x2, int y2, int x3, int y3)
   {
-     return fabs((x1*(y2-y3) + x2*(y3-y1)+ x3*(y1-y2))/2.0);
+    return fabs((x1 * (y2 - y3) + x2 * (y3 - y1) + x3 * (y1 - y2)) / 2.0);
   };
 
   int orient2d(int Ax, int Ay, int Bx, int By, int Cx, int Cy)
   {
-      return (Bx-Ax)*(Cy-Ay) - (By-Ay)*(Cx-Ax);
+    return (Bx - Ax) * (Cy - Ay) - (By - Ay) * (Cx - Ax);
   };
 };
-}
-#endif
+}  // namespace range_sensor_layer
+#endif  // RANGE_SENSOR_LAYER_RANGE_SENSOR_LAYER_H
