@@ -10,6 +10,7 @@
 #include <list>
 #include <string>
 #include <vector>
+#include "tf2_geometry_msgs/tf2_geometry_msgs.h"
 
 namespace range_sensor_layer
 {
