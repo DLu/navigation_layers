@@ -44,6 +44,9 @@ void RangeSensorLayer::onInitialize()
   std::string sensor_type_name;
   nh.param("input_sensor_type", sensor_type_name, std::string("ALL"));
 
+  nh.param("use_decay", use_decay_, false);
+  nh.param("pixel_decay", pixel_decay_, 10.0);
+
   boost::to_upper(sensor_type_name);
   ROS_INFO("%s: %s as input_sensor_type given", name_.c_str(), sensor_type_name.c_str());
 
@@ -250,7 +253,9 @@ void RangeSensorLayer::updateCostmap(sensor_msgs::Range& range_message, bool cle
   in.header.stamp = range_message.header.stamp;
   in.header.frame_id = range_message.header.frame_id;
 
-  if (!tf_->canTransform(global_frame_, in.header.frame_id, in.header.stamp, ros::Duration(0.1)))
+  std::map<int, int>::iterator it_pair;
+
+  if (!tf_->canTransform(global_frame_, in.header.frame_id, in.header.stamp, ros::Duration(0.3)))
   {
     ROS_ERROR_THROTTLE(1.0, "Range sensor layer can't transform from %s to %s at %f",
                        global_frame_.c_str(), in.header.frame_id.c_str(),
@@ -354,6 +359,21 @@ void RangeSensorLayer::updateCostmap(sensor_msgs::Range& range_message, bool cle
 
   buffered_readings_++;
   last_reading_time_ = ros::Time::now();
+  if(use_decay_)
+    timeCheck();
+}
+
+void RangeSensorLayer::timeCheck()
+{
+  std::map<std::pair<int,int>, double>::iterator it_map;
+  for (it_map = point_map.begin() ; it_map != point_map.end() ; it_map++ )
+  {
+    if(pixel_decay_ < last_reading_time_.toSec() - it_map->second)
+    {
+      point_map.erase(it_map);
+      setCost(std::get<0>(it_map->first), std::get<1>(it_map->first), costmap_2d::FREE_SPACE);
+    }
+  }
 }
 
 void RangeSensorLayer::update_cell(double ox, double oy, double ot, double r, double nx, double ny, bool clear)
@@ -376,7 +396,20 @@ void RangeSensorLayer::update_cell(double ox, double oy, double ot, double r, do
     ROS_DEBUG("%f %f | %f %f = %f", dx, dy, theta, phi, sensor);
     ROS_DEBUG("%f | %f %f | %f", prior, prob_occ, prob_not, new_prob);
     unsigned char c = to_cost(new_prob);
+
     setCost(x, y, c);
+    if(use_decay_)
+    {
+      if(c > to_cost(mark_threshold_))
+        point_map[std::make_pair(x, y)] = last_reading_time_.toSec();
+      else if(c < to_cost(clear_threshold_))
+      {
+        std::map<std::pair<int, int>, double>::iterator it_clear;
+        it_clear = point_map.find(std::make_pair(x, y));
+        if(it_clear != point_map.end())
+          point_map.erase(it_clear);
+      }
+    }
   }
 }
 
