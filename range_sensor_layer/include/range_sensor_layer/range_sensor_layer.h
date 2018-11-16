@@ -67,7 +67,7 @@ private:
   boost::function<void(sensor_msgs::Range& range_message)> processRangeMessageFunc_;
   boost::mutex range_message_mutex_;
   std::list<sensor_msgs::Range> range_msgs_buffer_;
-  std::map<std::pair<int, int>, double> point_map;
+  std::map<std::pair<int, int>, double> marked_point_history_;
 
   double max_angle_, phi_v_;
   double inflate_cone_;
