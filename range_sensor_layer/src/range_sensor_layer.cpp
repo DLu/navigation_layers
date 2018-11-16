@@ -365,9 +365,11 @@ void RangeSensorLayer::updateCostmap(sensor_msgs::Range& range_message, bool cle
 void RangeSensorLayer::timeCheck()
 {
   std::map<std::pair<int,int>, double>::iterator it_map;
+  last_reading_time_sec = last_reading_time_.toSec();
+
   for (it_map = marked_point_history_.begin() ; it_map != marked_point_history_.end() ; it_map++ )
   {
-    if(pixel_decay_ < last_reading_time_.toSec() - it_map->second)
+    if(pixel_decay_ < last_reading_time_sec - it_map->second)
     {
       marked_point_history_.erase(it_map);
       setCost(std::get<0>(it_map->first), std::get<1>(it_map->first), costmap_2d::FREE_SPACE);
@@ -399,12 +401,13 @@ void RangeSensorLayer::update_cell(double ox, double oy, double ot, double r, do
     setCost(x, y, c);
     if(use_decay_)
     {
+      std::pair<int, int> coordinate_pair(x, y);
       if(c > to_cost(mark_threshold_))
-        marked_point_history_[std::make_pair(x, y)] = last_reading_time_.toSec();
+        marked_point_history_[coordinate_pair] = last_reading_time_.toSec();
       else if(c < to_cost(clear_threshold_))
       {
         std::map<std::pair<int, int>, double>::iterator it_clear;
-        it_clear = marked_point_history_.find(std::make_pair(x, y));
+        it_clear = marked_point_history_.find(coordinate_pair));
         if(it_clear != marked_point_history_.end())
           marked_point_history_.erase(it_clear);
       }
