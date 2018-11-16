@@ -46,6 +46,7 @@ void RangeSensorLayer::onInitialize()
 
   nh.param("use_decay", use_decay_, false);
   nh.param("pixel_decay", pixel_decay_, 10.0);
+  nh.param("US_transform_waiting_time", US_transform_waiting_time_, 0.3);
 
   boost::to_upper(sensor_type_name);
   ROS_INFO("%s: %s as input_sensor_type given", name_.c_str(), sensor_type_name.c_str());
@@ -253,9 +254,7 @@ void RangeSensorLayer::updateCostmap(sensor_msgs::Range& range_message, bool cle
   in.header.stamp = range_message.header.stamp;
   in.header.frame_id = range_message.header.frame_id;
 
-  std::map<int, int>::iterator it_pair;
-
-  if (!tf_->canTransform(global_frame_, in.header.frame_id, in.header.stamp, ros::Duration(0.3)))
+  if (!tf_->canTransform(global_frame_, in.header.frame_id, in.header.stamp, ros::Duration(US_transform_waiting_time_)))
   {
     ROS_ERROR_THROTTLE(1.0, "Range sensor layer can't transform from %s to %s at %f",
                        global_frame_.c_str(), in.header.frame_id.c_str(),

@@ -84,6 +84,7 @@ private:
 
   bool use_decay_;
   double pixel_decay_;
+  double US_transform_waiting_time_;
 
   dynamic_reconfigure::Server<range_sensor_layer::RangeSensorLayerConfig> *dsrv_;
 
