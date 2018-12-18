@@ -21,8 +21,8 @@ void RangeSensorLayer::onInitialize()
   default_value_ = to_cost(0.5);
 
   matchSize();
-  min_x_ = min_y_ = -std::numeric_limits<double>::max();
-  max_x_ = max_y_ = std::numeric_limits<double>::max();
+  min_x_ = min_y_ = std::numeric_limits<double>::max();
+  max_x_ = max_y_ = std::numeric_limits<double>::min();
 
   // Default topic names list contains a single topic: /sonar
   // We use the XmlRpcValue constructor that takes a XML string and reading start offset
