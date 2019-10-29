@@ -45,12 +45,11 @@ private:
 
   void updateCostmap();
   void updateCostmap(sensor_msgs::Range& range_message, bool clear_sensor_cone);
-  void timeCheck();
+  void removeOutdatedReadings();
 
   double gamma(double theta);
   double delta(double phi);
   double sensor_model(double r, double phi, double theta);
-
 
   void get_deltas(double angle, double *dx, double *dy);
   void update_cell(double ox, double oy, double ot, double r, double nx, double ny, bool clear);
@@ -84,7 +83,7 @@ private:
 
   bool use_decay_;
   double pixel_decay_;
-  double US_transform_waiting_time_;
+  double transform_tolerance_;
 
   dynamic_reconfigure::Server<range_sensor_layer::RangeSensorLayerConfig> *dsrv_;
 
