@@ -365,11 +365,11 @@ void RangeSensorLayer::updateCostmap(sensor_msgs::Range& range_message, bool cle
 void RangeSensorLayer::removeOutdatedReadings()
 {
   std::map<std::pair<unsigned int, unsigned int>, double>::iterator it_map;
-  double last_reading_time_sec = last_reading_time_.toSec();
 
+  double removal_time = last_reading_time_.toSec() - pixel_decay_;
   for (it_map = marked_point_history_.begin() ; it_map != marked_point_history_.end() ; it_map++ )
   {
-    if(pixel_decay_ < last_reading_time_sec - it_map->second)
+    if(it_map->second < removal_time)
     {
       marked_point_history_.erase(it_map);
       setCost(std::get<0>(it_map->first), std::get<1>(it_map->first), costmap_2d::FREE_SPACE);
