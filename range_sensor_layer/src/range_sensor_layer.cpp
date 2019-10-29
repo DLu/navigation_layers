@@ -402,8 +402,11 @@ void RangeSensorLayer::update_cell(double ox, double oy, double ot, double r, do
     if(use_decay_)
     {
       std::pair<unsigned int, unsigned int> coordinate_pair(x, y);
+      // If the point has a score high enough to be marked in the costmap, we add it's time to the marked_point_history
       if(c > to_cost(mark_threshold_))
         marked_point_history_[coordinate_pair] = last_reading_time_.toSec();
+      // If the point score is not high enough, we try to find it in the mark history point.
+      // In the case we find it in the marked_point_history we clear it from the map so we won't checked already cleared point
       else if(c < to_cost(clear_threshold_))
       {
         std::map<std::pair<unsigned int, unsigned int>, double>::iterator it_clear;
