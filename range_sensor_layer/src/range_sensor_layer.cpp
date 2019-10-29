@@ -401,7 +401,7 @@ void RangeSensorLayer::update_cell(double ox, double oy, double ot, double r, do
     setCost(x, y, c);
     if(use_decay_)
     {
-      std::pair<int, int> coordinate_pair(x, y);
+      std::pair<unsigned int, unsigned int> coordinate_pair(x, y);
       if(c > to_cost(mark_threshold_))
         marked_point_history_[coordinate_pair] = last_reading_time_.toSec();
       else if(c < to_cost(clear_threshold_))
