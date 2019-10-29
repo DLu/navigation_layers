@@ -364,7 +364,7 @@ void RangeSensorLayer::updateCostmap(sensor_msgs::Range& range_message, bool cle
 
 void RangeSensorLayer::removeOutdatedReadings()
 {
-  std::map<std::pair<int,int>, double>::iterator it_map;
+  std::map<std::pair<unsigned int, unsigned int>, double>::iterator it_map;
   double last_reading_time_sec = last_reading_time_.toSec();
 
   for (it_map = marked_point_history_.begin() ; it_map != marked_point_history_.end() ; it_map++ )
@@ -406,7 +406,7 @@ void RangeSensorLayer::update_cell(double ox, double oy, double ot, double r, do
         marked_point_history_[coordinate_pair] = last_reading_time_.toSec();
       else if(c < to_cost(clear_threshold_))
       {
-        std::map<std::pair<int, int>, double>::iterator it_clear;
+        std::map<std::pair<unsigned int, unsigned int>, double>::iterator it_clear;
         it_clear = marked_point_history_.find(coordinate_pair);
         if(it_clear != marked_point_history_.end())
           marked_point_history_.erase(it_clear);
