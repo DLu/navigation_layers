@@ -2,6 +2,7 @@
 #include <social_navigation_layers/proxemic_layer.h>
 #include <geometry_msgs/PointStamped.h>
 #include <pluginlib/class_list_macros.h>
+#include <tf2_geometry_msgs/tf2_geometry_msgs.h>
 #include <angles/angles.h>
 #include <algorithm>
 #include <list>
@@ -36,6 +37,7 @@ public:
         pt.point.y = person.position.y;
         pt.point.z = person.position.z;
         pt.header.frame_id = people_list_.header.frame_id;
+        pt.header.stamp = people_list_.header.stamp;
         tf_->transform(pt, opt, global_frame);
         tpt.position.x = opt.point.x;
         tpt.position.y = opt.point.y;
