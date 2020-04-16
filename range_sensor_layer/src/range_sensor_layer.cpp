@@ -198,7 +198,7 @@ void RangeSensorLayer::processRangeMsg(sensor_msgs::Range& range_message)
 
 void RangeSensorLayer::processFixedRangeMsg(sensor_msgs::Range& range_message)
 {
-  if (!isinf(range_message.range))
+  if (!std::isinf(range_message.range))
   {
     ROS_ERROR_THROTTLE(1.0,
         "Fixed distance ranger (min_range == max_range) in frame %s sent invalid value. Only -Inf (== object detected) and Inf (== no object detected) are valid.",
