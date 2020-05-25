@@ -10,12 +10,13 @@ find_package(catkin REQUIRED COMPONENTS
   pluginlib
   roscpp
   sensor_msgs
+  tf2_geometry_msgs
 )
 
 generate_dynamic_reconfigure_options(cfg/RangeSensorLayer.cfg)
 
 catkin_package(
-    CATKIN_DEPENDS angles costmap_2d dynamic_reconfigure geometry_msgs pluginlib roscpp sensor_msgs
+    CATKIN_DEPENDS angles costmap_2d dynamic_reconfigure geometry_msgs pluginlib roscpp sensor_msgs tf2_geometry_msgs
     INCLUDE_DIRS include
     LIBRARIES range_sensor_layer
 )
