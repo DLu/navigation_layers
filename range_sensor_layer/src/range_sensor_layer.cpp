@@ -27,8 +27,7 @@ void RangeSensorLayer::onInitialize()
   default_value_ = to_cost(0.5);
 
   matchSize();
-  min_x_ = min_y_ = -std::numeric_limits<double>::max();
-  max_x_ = max_y_ = std::numeric_limits<double>::max();
+  resetRange();
 
   // Default topic names list contains a single topic: /sonar
   // We use the XmlRpcValue constructor that takes a XML string and reading start offset
@@ -380,6 +379,12 @@ void RangeSensorLayer::update_cell(double ox, double oy, double ot, double r, do
   }
 }
 
+void RangeSensorLayer::resetRange()
+{
+  min_x_ = min_y_ =  std::numeric_limits<double>::max();
+  max_x_ = max_y_ = -std::numeric_limits<double>::max();
+}
+
 void RangeSensorLayer::updateBounds(double robot_x, double robot_y, double robot_yaw,
                                     double* min_x, double* min_y, double* max_x, double* max_y)
 {
@@ -393,8 +398,7 @@ void RangeSensorLayer::updateBounds(double robot_x, double robot_y, double robot
   *max_x = std::max(*max_x, max_x_);
   *max_y = std::max(*max_y, max_y_);
 
-  min_x_ = min_y_ = std::numeric_limits<double>::max();
-  max_x_ = max_y_ = std::numeric_limits<double>::min();
+  resetRange();
 
   if (!enabled_)
   {

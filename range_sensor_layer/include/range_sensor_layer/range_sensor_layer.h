@@ -43,6 +43,7 @@ private:
   void processFixedRangeMsg(sensor_msgs::Range& range_message);
   void processVariableRangeMsg(sensor_msgs::Range& range_message);
 
+  void resetRange();
   void updateCostmap();
   void updateCostmap(sensor_msgs::Range& range_message, bool clear_sensor_cone);
 
