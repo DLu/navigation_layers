@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 2.8.3)
+cmake_minimum_required(VERSION 3.0.2)
 project(range_sensor_layer)
 set_directory_properties(PROPERTIES COMPILE_OPTIONS "-Wall;-Werror")
 
