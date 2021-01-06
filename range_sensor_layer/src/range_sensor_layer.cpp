@@ -71,7 +71,7 @@ void RangeSensorLayer::onInitialize()
   }
 
   // Traverse the topic names list subscribing to all of them with the same callback method
-  for (unsigned int i = 0; i < topic_names.size(); i++)
+  for (int i = 0; i < topic_names.size(); i++)
   {
     if (topic_names[i].getType() != XmlRpc::XmlRpcValue::TypeString)
     {
