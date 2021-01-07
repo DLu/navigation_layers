@@ -7,7 +7,9 @@
 #include <algorithm>
 #include <list>
 #include <limits>
+#include <map>
 #include <string>
+#include <utility>
 
 PLUGINLIB_EXPORT_CLASS(range_sensor_layer::RangeSensorLayer, costmap_2d::Layer)
 
