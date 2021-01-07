@@ -46,6 +46,7 @@ private:
   void resetRange();
   void updateCostmap();
   void updateCostmap(sensor_msgs::Range& range_message, bool clear_sensor_cone);
+  void removeOutdatedReadings();
 
   double gamma(double theta);
   double delta(double phi);
@@ -66,6 +67,7 @@ private:
   boost::function<void(sensor_msgs::Range& range_message)> processRangeMessageFunc_;
   boost::mutex range_message_mutex_;
   std::list<sensor_msgs::Range> range_msgs_buffer_;
+  std::map<std::pair<unsigned int, unsigned int>, double> marked_point_history_;
 
   double max_angle_, phi_v_;
   double inflate_cone_;
@@ -79,6 +81,10 @@ private:
   unsigned int buffered_readings_;
   std::vector<ros::Subscriber> range_subs_;
   double min_x_, min_y_, max_x_, max_y_;
+
+  bool use_decay_;
+  double pixel_decay_;
+  double transform_tolerance_;
 
   dynamic_reconfigure::Server<range_sensor_layer::RangeSensorLayerConfig> *dsrv_;
 
