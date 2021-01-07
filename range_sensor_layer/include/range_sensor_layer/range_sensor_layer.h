@@ -8,7 +8,9 @@
 #include <range_sensor_layer/RangeSensorLayerConfig.h>
 #include <dynamic_reconfigure/server.h>
 #include <list>
+#include <map>
 #include <string>
+#include <utility>
 #include <vector>
 #include <tf2_geometry_msgs/tf2_geometry_msgs.h>
 

@@ -3,22 +3,32 @@ project(range_sensor_layer)
 set_directory_properties(PROPERTIES COMPILE_OPTIONS "-Wall;-Werror")
 
 find_package(catkin REQUIRED COMPONENTS
-  angles
-  costmap_2d
-  dynamic_reconfigure
-  geometry_msgs
-  pluginlib
-  roscpp
-  sensor_msgs
-  tf2_geometry_msgs
+    angles
+    costmap_2d
+    dynamic_reconfigure
+    geometry_msgs
+    pluginlib
+    roscpp
+    rospy
+    sensor_msgs
+    tf2_geometry_msgs
 )
 
 generate_dynamic_reconfigure_options(cfg/RangeSensorLayer.cfg)
 
 catkin_package(
-    CATKIN_DEPENDS angles costmap_2d dynamic_reconfigure geometry_msgs pluginlib roscpp sensor_msgs tf2_geometry_msgs
+    CATKIN_DEPENDS
+        angles
+        costmap_2d
+        dynamic_reconfigure
+        geometry_msgs
+        pluginlib
+        roscpp
+        rospy
+        sensor_msgs
+        tf2_geometry_msgs
     INCLUDE_DIRS include
-    LIBRARIES range_sensor_layer
+    LIBRARIES ${PROJECT_NAME}
 )
 
 include_directories(include ${catkin_INCLUDE_DIRS})
@@ -33,7 +43,7 @@ if(CATKIN_ENABLE_TESTING)
   roslint_add_test()
 endif()
 
-install(TARGETS range_sensor_layer
+install(TARGETS ${PROJECT_NAME}
         LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
         ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
         RUNTIME DESTINATION ${CATKIN_GLOBAL_BIN_DESTINATION}
@@ -46,4 +56,6 @@ install(FILES costmap_plugins.xml
 install(DIRECTORY include/${PROJECT_NAME}/
         DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION}
 )
-catkin_install_python(PROGRAMS scripts/send_message.py DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION})
+catkin_install_python(PROGRAMS scripts/send_message.py
+                      DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
+)

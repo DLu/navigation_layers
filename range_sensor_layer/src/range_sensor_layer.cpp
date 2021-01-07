@@ -7,7 +7,9 @@
 #include <algorithm>
 #include <list>
 #include <limits>
+#include <map>
 #include <string>
+#include <utility>
 
 PLUGINLIB_EXPORT_CLASS(range_sensor_layer::RangeSensorLayer, costmap_2d::Layer)
 
@@ -357,7 +359,7 @@ void RangeSensorLayer::updateCostmap(sensor_msgs::Range& range_message, bool cle
 
   buffered_readings_++;
   last_reading_time_ = ros::Time::now();
-  if(use_decay_)
+  if (use_decay_)
     removeOutdatedReadings();
 }
 
@@ -368,7 +370,7 @@ void RangeSensorLayer::removeOutdatedReadings()
   double removal_time = last_reading_time_.toSec() - pixel_decay_;
   for (it_map = marked_point_history_.begin() ; it_map != marked_point_history_.end() ; it_map++ )
   {
-    if(it_map->second < removal_time)
+    if (it_map->second < removal_time)
     {
       marked_point_history_.erase(it_map);
       setCost(std::get<0>(it_map->first), std::get<1>(it_map->first), costmap_2d::FREE_SPACE);
@@ -398,19 +400,20 @@ void RangeSensorLayer::update_cell(double ox, double oy, double ot, double r, do
     unsigned char c = to_cost(new_prob);
 
     setCost(x, y, c);
-    if(use_decay_)
+    if (use_decay_)
     {
       std::pair<unsigned int, unsigned int> coordinate_pair(x, y);
       // If the point has a score high enough to be marked in the costmap, we add it's time to the marked_point_history
-      if(c > to_cost(mark_threshold_))
+      if (c > to_cost(mark_threshold_))
         marked_point_history_[coordinate_pair] = last_reading_time_.toSec();
       // If the point score is not high enough, we try to find it in the mark history point.
-      // In the case we find it in the marked_point_history we clear it from the map so we won't checked already cleared point
-      else if(c < to_cost(clear_threshold_))
+      // In the case we find it in the marked_point_history
+      // we clear it from the map so we won't checked already cleared point
+      else if (c < to_cost(clear_threshold_))
       {
         std::map<std::pair<unsigned int, unsigned int>, double>::iterator it_clear;
         it_clear = marked_point_history_.find(coordinate_pair);
-        if(it_clear != marked_point_history_.end())
+        if (it_clear != marked_point_history_.end())
           marked_point_history_.erase(it_clear);
       }
     }
