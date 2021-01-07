@@ -249,7 +249,7 @@ void RangeSensorLayer::updateCostmap(sensor_msgs::Range& range_message, bool cle
   in.header.stamp = range_message.header.stamp;
   in.header.frame_id = range_message.header.frame_id;
 
-  if(!tf_->waitForTransform(global_frame_, in.header.frame_id, in.header.stamp, ros::Duration(0.1)) )
+  if (!tf_->waitForTransform(global_frame_, in.header.frame_id, in.header.stamp, ros::Duration(0.1)))
   {
     ROS_ERROR_THROTTLE(1.0, "Range sensor layer can't transform from %s to %s at %f",
                        global_frame_.c_str(), in.header.frame_id.c_str(),
