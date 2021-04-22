@@ -368,12 +368,14 @@ void RangeSensorLayer::removeOutdatedReadings()
   std::map<std::pair<unsigned int, unsigned int>, double>::iterator it_map;
 
   double removal_time = last_reading_time_.toSec() - pixel_decay_;
-  for (it_map = marked_point_history_.begin() ; it_map != marked_point_history_.end() ; it_map++ )
+  for (it_map = marked_point_history_.begin() ; it_map != marked_point_history_.end() ;)
   {
     if (it_map->second < removal_time)
     {
-      marked_point_history_.erase(it_map);
+      marked_point_history_.erase(it_map++);
       setCost(std::get<0>(it_map->first), std::get<1>(it_map->first), costmap_2d::FREE_SPACE);
+    } else {
+      it_map++;
     }
   }
 }
