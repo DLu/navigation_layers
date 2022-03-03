@@ -19,7 +19,7 @@ void SocialLayer::onInitialize()
   ros::NodeHandle nh("~/" + name_), g_nh;
   current_ = true;
   first_time_ = true;
-  people_sub_ = nh.subscribe("/people", 1, &SocialLayer::peopleCallback, this);
+  people_sub_ = nh.subscribe("people", 1, &SocialLayer::peopleCallback, this);
 }
 
 void SocialLayer::peopleCallback(const people_msgs::People& people)
