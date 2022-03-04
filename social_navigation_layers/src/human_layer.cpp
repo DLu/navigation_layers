@@ -5,8 +5,9 @@
 //  This class implements a costmap 2D plugin that represents humans. It
 //  is primarily intended as a layer for the global costmap.
 //
-#include <cmath>
 #include <social_navigation_layers/human_layer.h>
+
+#include <cmath>
 
 
 namespace social_navigation_layers

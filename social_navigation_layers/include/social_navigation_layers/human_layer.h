@@ -7,9 +7,11 @@
 //
 #ifndef SOCIAL_NAVIGATION_LAYERS_BADGER_HUMAN_LAYER_H
 #define SOCIAL_NAVIGATION_LAYERS_BADGER_HUMAN_LAYER_H
+
 #include <ros/ros.h>
 #include <dynamic_reconfigure/server.h>
 #include <pluginlib/class_list_macros.h>
+
 #include <social_navigation_layers/social_layer.h>
 #include <social_navigation_layers/HumanLayerConfig.h>
 
