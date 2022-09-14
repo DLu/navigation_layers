@@ -1,0 +1,27 @@
+<package format="2">
+  <name>social_navigation_layers</name>
+  <version>0.5.0</version>
+  <description>
+  Plugin-based layers for the navigation stack that
+  implement various social navigation contraints, like proxemic distance.
+  </description>
+  <author email="davidvlu@gmail.com">David V. Lu!!</author>
+  <maintainer email="davidvlu@gmail.com">David V. Lu!!</maintainer>
+  <license>BSD</license>
+  <url>http://ros.org/wiki/social_navigation_layers</url>
+
+  <buildtool_depend>catkin</buildtool_depend>
+  <depend>angles</depend>
+  <depend>costmap_2d</depend>
+  <depend>dynamic_reconfigure</depend>
+  <depend>geometry_msgs</depend>
+  <depend>people_msgs</depend>
+  <depend>pluginlib</depend>
+  <depend>roscpp</depend>
+  <test_depend>roslint</test_depend>
+
+  <export>
+    <costmap_2d plugin="${prefix}/costmap_plugins.xml"/>
+  </export>
+
+</package>

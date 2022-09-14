@@ -1,0 +1,15 @@
+<package format="2">
+    <name>navigation_layers</name>
+    <version>0.5.0</version>
+    <description>Extra navigation layers.</description>
+    <maintainer email="davidvlu@gmail.com">David V. Lu!!</maintainer>
+    <author>David V. Lu!!</author>
+    <license>BSD</license>  
+
+    <buildtool_depend>catkin</buildtool_depend>
+    <exec_depend>range_sensor_layer</exec_depend>
+    <exec_depend>social_navigation_layers</exec_depend>
+    <export>
+        <metapackage/>
+    </export>
+</package>
